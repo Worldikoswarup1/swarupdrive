@@ -99,16 +99,21 @@ const upload = multer({
 const app = express();
 const server = http.createServer(app);
 
+// CORS origin checker
+const FRONTEND_URL = process.env.FRONTEND_URL;            // ← add this key to .env
+const LOCALHOST_REGEX = /^http:\/\/localhost:\d+$/;
+function checkOrigin(origin, callback) {
+  if (!origin) return callback(null, true);
+  if (origin === FRONTEND_URL || LOCALHOST_REGEX.test(origin)) {
+    return callback(null, true);
+  }
+  return callback(new Error(`Origin ${origin} not allowed by CORS`));
+}
+
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (origin.match(/^http:\/\/localhost:\d+$/)) {
-        return callback(null, true);
-      }
-      callback(new Error('Not allowed by CORS'));
-    },
+    origin: checkOrigin,
     methods: ['GET','POST'],
     credentials: true,
   },
@@ -117,21 +122,12 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl)
-    if (!origin) return callback(null, true);
-
-    // Allow any localhost origin: http://localhost:3000, http://localhost:5173, etc.
-    const allowed = origin.match(/^http:\/\/localhost:\d+$/);
-    if (allowed) {
-      return callback(null, true);
-    }
-
-    // Otherwise, block the request
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: checkOrigin,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true,
+  allowedHeaders: ['Content-Type','Authorization'],
 }));
+
 app.use(express.json());
 
 
