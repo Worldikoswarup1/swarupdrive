@@ -434,7 +434,7 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
   }
   
   try {
-    const { originalname, mimetype, size, filename, path: filePath } = req.file;
+    const { originalname, mimetype, size, path: filePath } = req.file;
     
     // For text files, encrypt the content
     let iv = null;
@@ -451,12 +451,24 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
       authTag = encrypted.authTag;
     }
     
-    // Insert file metadata into database
+    // 1) Upload the raw (or encrypted) file to Supabase Storage
+    const key = `${uuidv4()}${path.extname(originalname)}`;
+    const fileBuffer = fs.readFileSync(filePath);
+    const { error: uploadError } = await supabase
+      .storage
+      .from(BUCKET)
+      .upload(key, fileBuffer, { contentType: mimetype });
+    if (uploadError) throw uploadError;
+    // remove temp file
+    fs.unlinkSync(filePath);
+  
+    // 2) Insert file metadata into your DB, storing `key` as the storage_path
     const result = await pool.query(
-      `INSERT INTO files (name, type, size, storage_path, iv, auth_tag, owner_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO files
+         (name, type, size, storage_path, iv, auth_tag, owner_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING id, name, type, size, created_at, updated_at, owner_id`,
-      [originalname, mimetype, size, filename, iv, authTag, req.user.id]
+      [originalname, mimetype, size, key, iv, authTag, req.user.id]
     );
     
     // Insert into user_files for owner with write permission
@@ -621,29 +633,36 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     
     const file = accessCheck.rows[0];
     
-    // Read the file
-    const filePath = path.join(STORAGE_DIR, file.storage_path);
-    
-    if (!fs.existsSync(filePath)) {
+    // Download from Supabase Storage
+    const key = file.storage_path;
+    const { data: downloadStream, error: downloadError } = await supabase
+      .storage
+      .from(BUCKET)
+      .download(key);
+    if (downloadError) {
+      console.error('Supabase download error:', downloadError);
       return res.status(404).json({ message: 'File not found' });
     }
-    
-    let content;
-    
-    // If file is encrypted (text file), decrypt it
+  
+    // Stream raw bytes into a string (for text files) or pipe directly
     if (file.encrypted && file.iv && file.auth_tag) {
-      const encryptedContent = fs.readFileSync(filePath, 'hex');
-      content = decrypt({
-        iv: file.iv,
-        content: encryptedContent,
-        authTag: file.auth_tag,
+      // collect buffer
+      const chunks = [];
+      downloadStream.on('data', c => chunks.push(c));
+      downloadStream.on('end', () => {
+        const hex = Buffer.concat(chunks).toString('hex');
+        const decrypted = decrypt({ iv: file.iv, content: hex, authTag: file.auth_tag });
+        res.json({ content: decrypted });
       });
     } else {
-      // For other file types, just read the content
-      content = fs.readFileSync(filePath, 'utf8');
+      // For plaintext, read buffer → to string
+      const chunks = [];
+      downloadStream.on('data', c => chunks.push(c));
+      downloadStream.on('end', () => {
+        res.json({ content: Buffer.concat(chunks).toString('utf8') });
+      });
     }
-    
-    res.json({ content });
+  
   } catch (err) {
     console.error('Error fetching file content:', err);
     res.status(500).json({ message: 'Failed to get file content' });
