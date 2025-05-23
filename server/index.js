@@ -16,6 +16,7 @@ import { parseBuffer } from 'music-metadata';
 import { parseFile } from 'music-metadata';
 import ffmpeg from 'fluent-ffmpeg';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 
 // Get the directory name
@@ -23,6 +24,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+
+// ─── Supabase Storage Setup ─────────────────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+const BUCKET = process.env.SUPABASE_BUCKET;
+
 
 const FFMPEG_BIN  = process.env.FFMPEG_PATH  || 'ffmpeg';
 const FFPROBE_BIN = process.env.FFPROBE_PATH || 'ffprobe';
