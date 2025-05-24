@@ -88,6 +88,10 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
         const e = new Error('not-authorized');
         throw e;
       }
+      // if the server returned 403, bubble up a special "not-authorized" error
+      if (err.response?.status === 403) {
+        throw new Error('not-authorized');
+      }
       setError(err.response?.data?.message || 'Failed to get file content');
       throw err;
     } finally {
