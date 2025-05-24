@@ -51,6 +51,9 @@ const FileContext = createContext<FileContextType>({
   shareFile: async () => '',
   joinTeam: async () => {},
   setSelectedFile: () => {},
+  uploading: false,
+  uploadProgress: 0,
+  cancelUpload: () => {},
 });
 
 export const useFiles = () => useContext(FileContext);
