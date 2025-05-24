@@ -1,5 +1,6 @@
 //src/pages/Dashboard.tsx
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useFiles } from '../contexts/FileContext';  
 import { 
   Box,
@@ -31,7 +32,7 @@ import JoinTeamDialog from '../components/JoinTeamDialog';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { uploading } = useFiles();   
+  const { uploading, uploadProgress, cancelUpload } = useFiles();
   const navigate = useNavigate();
   // remove local uploading
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -39,6 +40,18 @@ const Dashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [joinTeamDialogOpen, setJoinTeamDialogOpen] = useState(false);
 
+  // ─── prevent reload while an upload is in progress ─────────────────────
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (uploading) {
+        e.preventDefault();
+        e.returnValue = 'If you reload now, the upload will be cancelled. Stay on this page?';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [uploading]);
+  
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);
   };
@@ -138,18 +151,25 @@ const Dashboard: React.FC = () => {
           {((showUpload) || uploading) && (
             <>
               {/*  🟡 yellow progress bar + message */}
-              {uploading && (
-                <Box sx={{ mb: 2 }}>
-                  <LinearProgress color="warning" />
-                  <Typography 
-                    variant="subtitle2" 
-                    align="center" 
-                    sx={{ mt: 1, color: 'text.secondary' }}
-                  >
-                    File is being uploaded. Hold on please…
-                  </Typography>
-                </Box>
-              )}
+                  {uploading && (
+                    <Box sx={{ mb: 2, textAlign: 'center' }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={uploadProgress}
+                        color="warning"
+                      />
+                      <Typography variant="subtitle2" sx={{ mt: 1, color: 'text.secondary' }}>
+                        {uploadProgress}% processed
+                      </Typography>
+                      <Button
+                        sx={{ mt: 1 }}
+                        color="error"
+                        onClick={cancelUpload}
+                      >
+                        Cancel
+                      </Button>
+                    </Box>
+                  )}
                <FileUpload />
             </>
           )}
