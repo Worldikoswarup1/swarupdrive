@@ -147,11 +147,10 @@ const Dashboard: React.FC = () => {
                   </Typography>
                 </Box>
               )}
-              <FileUpload
-                // let Dashboard know when uploading starts/ends
-                onUploadStart={() => setUploading(true)}
-                onUploadEnd={()   => setUploading(false)}
-              />
+               <FileUpload
+                 onUploadStart={() => setUploading(true)}
+                 onUploadEnd={()   => setUploading(false)}
+               />
             </>
           )}
           
