@@ -241,7 +241,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS shares (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        file_id UUID REFERENCES files(id) ON  CASCADE,
+        file_id UUID REFERENCES files(id) ON DELETE CASCADE,
         token TEXT UNIQUE NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP WITH TIME ZONE
@@ -251,8 +251,8 @@ const initDatabase = async () => {
     // Create user_files table for tracking which users have access to which files
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_files (
-        user_id UUID REFERENCES users(id) ON  CASCADE,
-        file_id UUID REFERENCES files(id) ON  CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        file_id UUID REFERENCES files(id) ON DELETE CASCADE,
         permission TEXT NOT NULL DEFAULT 'read', -- 'read', 'write'
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, file_id)
@@ -276,7 +276,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS otps (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON  CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         code TEXT NOT NULL,
         expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -287,7 +287,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS face_data (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON  CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         descriptor JSONB NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
@@ -296,7 +296,7 @@ const initDatabase = async () => {
     // Video metadata table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS video_metadata (
-        file_id     UUID        PRIMARY KEY REFERENCES files(id) ON  CASCADE,
+        file_id     UUID        PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
         title       TEXT        NOT NULL,
         description TEXT,
         duration    INTEGER,     -- duration in seconds
