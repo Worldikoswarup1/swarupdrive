@@ -7,7 +7,8 @@ import {
   Paper, 
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
+  LinearProgress,
 } from '@mui/material';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import { useFiles } from '../contexts/FileContext';
@@ -18,16 +19,15 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
      onUploadEnd?: () => void;
    }
   
-   const FileUpload: React.FC<FileUploadProps> = ({ onUploadStart, onUploadEnd }) => {
+  const FileUpload: React.FC<FileUploadProps> = ({ onUploadStart, onUploadEnd }) => {
   const { uploadFile } = useFiles();
   const [dragging, setDragging] = useState(false);
-  const [localUploading, setLocalUploading] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { uploading, uploadProgress, cancelUpload } = useFiles();
+  const abortControllerRef = useRef<AbortController | null>(null);
+    
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(true);
@@ -64,37 +64,17 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
       return;
     }
 
-    // 🚀 start upload with progress & cancel support
     const controller = new AbortController();
     abortControllerRef.current = controller;
     try {
-      onUploadStart?.();
-      setLocalUploading(true);
-      setError(null);
-      setProgress(0);
-
-      await uploadFile(file, {
-        signal: controller.signal,
-        onUploadProgress: (e) => {
-          if (e.total) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        },
-      });
+      await uploadFile(file); // uploadFile already uses context controller + progress
       setSuccess(true);
-    } catch (err: any) {
-      if (err.name === 'CanceledError' || err.message === 'canceled') {
-        setError('Upload canceled');
-      } else {
-        setError("Failed to upload file");
-        console.error(err);
-      }
+    } catch (err) {
+      console.error(err);
     } finally {
-      abortControllerRef.current = null;
-      setLocalUploading(false);
-      onUploadEnd?.();
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  
   };
 
   const handleButtonClick = () => {
@@ -104,7 +84,11 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
   return (
     <>
       <Paper
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         sx={{
+          position: 'relative',
           p: 3,
           mb: 3,
           border: '2px dashed',
@@ -112,10 +96,28 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           backgroundColor: dragging ? 'rgba(25, 118, 210, 0.04)' : 'background.paper',
           transition: 'all 0.2s ease-in-out',
         }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
+      {/* ── PROGRESS OVERLAY ── */}
+      {uploading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            p: 0,
+          }}
+        >
+          <LinearProgress variant="determinate" value={uploadProgress} color="warning" sx={{ height: 4 }} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+            <Typography variant="body2">{uploadProgress}%</Typography>
+            <Button size="small" color="error" onClick={cancelUpload}>
+              Cancel
+            </Button>
+          </Box>
+        </Box>
+      )}
+
         <Box
           sx={{
             display: 'flex',
@@ -132,17 +134,10 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             ref={fileInputRef}
           />
           
-          {localUploading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={24} />
-              <Typography>{progress}%</Typography>
-              <Button color="error" onClick={() => abortControllerRef.current?.abort()}>
-                Cancel
-              </Button>
-            </Box>
-          ) : (
+          {!uploading && (
             <UploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
           )}
+          {uploading && null}
           
           <Typography variant="h6" component="h2" gutterBottom align="center">
             {dragging
