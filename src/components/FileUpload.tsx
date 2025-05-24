@@ -105,19 +105,21 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           variant="body2"
           align="center"
           sx={{
-            mt: 1,
-            mb: 2,
+            mt: 0.5,
+            mb: 0.5,
             '& .dots': {
               animation: 'dots 1s steps(5,end) infinite',
             },
           }}
         >
-          <span className="shimmer animate-shimmer">
-            File is being uploaded to SwarupDrive. Hold on please
-          </span>
-          <span className="dots">...</span>
-        </Typography>
 
+         {/* wave gradient over text */}
+        <span className="wave-text">
+          File is being uploaded to SwarupDrive. Hold on please
+        </span>
+         {/* keep your three-dot animation */}
+         <span className="dots">...</span>
+        </Typography>
       )}
         
       {/* ── GOOGLE‑CLASSROOM‑STYLE PROGRESS LINE ── */}
@@ -142,7 +144,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             justifyContent: 'center',
             alignItems: 'center',
             gap: 1.5,
-            mb: 2,
+            mb: 1,
           }}
         >
           <CircularProgress size={24} />
