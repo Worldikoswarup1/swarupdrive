@@ -788,33 +788,36 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
 });
 
 
-app.delete('/api/files/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    // Check if user is the owner of the file
-    const fileCheck = await pool.query(
+    // First, check ownership
+    const ownerCheck = await pool.query(
       'SELECT * FROM files WHERE id = $1 AND owner_id = $2',
       [id, req.user.id]
     );
-    
-    if (fileCheck.rows.length === 0) {
-      return res.status(403).json({ message: 'You can only delete files you own' });
+    if (ownerCheck.rows.length > 0) {
+      // User is the owner: fully delete
+      const file = ownerCheck.rows[0];
+      const filePath = path.join(STORAGE_DIR, file.storage_path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await pool.query('DELETE FROM files WHERE id = $1', [id]);
+      return res.json({ message: 'File deleted permanently by owner' });
     }
-    
-    const file = fileCheck.rows[0];
-    
-    // Delete file from storage
-    const filePath = path.join(STORAGE_DIR, file.storage_path);
-    
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+  
+    // Not the owner: see if they have a user_files entry
+    const accessCheck = await pool.query(
+      'SELECT * FROM user_files WHERE file_id = $1 AND user_id = $2',
+      [id, req.user.id]
+    );
+    if (accessCheck.rows.length > 0) {
+      // Revoke their access only
+      await pool.query(
+        'DELETE FROM user_files WHERE file_id = $1 AND user_id = $2',
+        [id, req.user.id]
+      );
+      return res.json({ message: 'Access revoked; file remains intact' });
     }
-    
-    // Delete file record from database
-    await pool.query('DELETE FROM files WHERE id = $1', [id]);
-    
-    res.json({ message: 'File deleted successfully' });
+  
+    // Neither owner nor shared with them
+    return res.status(403).json({ message: 'You cannot delete this file or revoke access' });
   } catch (err) {
     console.error('Error deleting file:', err);
     res.status(500).json({ message: 'Failed to delete file' });
