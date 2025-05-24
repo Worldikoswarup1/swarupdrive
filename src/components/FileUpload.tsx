@@ -22,6 +22,8 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
   const { uploadFile } = useFiles();
   const [dragging, setDragging] = useState(false);
   const [localUploading, setLocalUploading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,22 +64,36 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
       return;
     }
 
+    // 🚀 start upload with progress & cancel support
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     try {
-      onUploadStart?.();                   // 🚀 notify parent
+      onUploadStart?.();
       setLocalUploading(true);
       setError(null);
-      await uploadFile(file);
+      setProgress(0);
+
+      await uploadFile(file, {
+        signal: controller.signal,
+        onUploadProgress: (e) => {
+          if (e.total) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        },
+      });
       setSuccess(true);
-    } catch (err) {
-      setError("Failed to upload file");
-      console.error(err);
-    } finally {
-      setLocalUploading(false);
-      onUploadEnd?.();                     // 🚀 notify parent
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+    } catch (err: any) {
+      if (err.name === 'CanceledError' || err.message === 'canceled') {
+        setError('Upload canceled');
+      } else {
+        setError("Failed to upload file");
+        console.error(err);
       }
+    } finally {
+      abortControllerRef.current = null;
+      setLocalUploading(false);
+      onUploadEnd?.();
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -117,7 +133,13 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           />
           
           {localUploading ? (
-            <CircularProgress size={24} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography>{progress}%</Typography>
+              <Button onClick={() => abortControllerRef.current?.abort()}>
+                Cancel
+              </Button>
+            </Box>
           ) : (
             <UploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
           )}
