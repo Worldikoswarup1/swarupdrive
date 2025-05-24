@@ -31,10 +31,11 @@ import JoinTeamDialog from '../components/JoinTeamDialog';
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [uploading, setUploading] = useState(false);
+  // remove local uploading
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const { uploading } = useFiles();
   const [joinTeamDialogOpen, setJoinTeamDialogOpen] = useState(false);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -56,7 +57,7 @@ const Dashboard: React.FC = () => {
   };
 
   const toggleUpload = () => {
-    setShowUpload(!showUpload);
+    if (!uploading) setShowUpload(!showUpload);
   };
 
   return (
@@ -130,14 +131,10 @@ const Dashboard: React.FC = () => {
               onClick={toggleUpload}
               disabled={uploading}
             >
-              {uploading
-                ? "Uploading…"
-                : showUpload
-                  ? "Close"
-                  : "Upload File"}
+              {uploading ? "Uploading…" : showUpload ? "Close" : "Upload File"}
             </Button>
           </Box>
-          {(showUpload || uploading) && (
+          {((showUpload) || uploading) && (
             <>
               {/*  🟡 yellow progress bar + message */}
               {uploading && (
