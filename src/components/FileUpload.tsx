@@ -91,12 +91,26 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           position: 'relative',
           p: 3,
           mb: 3,
-          border: '2px dashed',
+          border: 'none',
           borderColor: dragging ? 'primary.main' : 'divider',
           backgroundColor: dragging ? 'rgba(25, 118, 210, 0.04)' : 'background.paper',
           transition: 'all 0.2s ease-in-out',
         }}
       >
+      {/* ── GOOGLE‑CLASSROOM‑STYLE PROGRESS LINE ── */}
+      {uploading && (
+        <LinearProgress
+          color="warning"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+          }}
+        />
+      )}
+
       {/* ── INLINE UPLOAD STATUS ── */}
       {uploading && (
         <Box
