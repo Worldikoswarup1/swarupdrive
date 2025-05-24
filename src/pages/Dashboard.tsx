@@ -37,7 +37,6 @@ const Dashboard: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tabValue, setTabValue] = useState(0);
-  const { uploading } = useFiles();
   const [joinTeamDialogOpen, setJoinTeamDialogOpen] = useState(false);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
