@@ -97,24 +97,27 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           transition: 'all 0.2s ease-in-out',
         }}
       >
-      {/* ── PROGRESS OVERLAY ── */}
+      {/* ── INLINE UPLOAD STATUS ── */}
       {uploading && (
         <Box
           sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            p: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 1.5,
+            mb: 2,
           }}
         >
-          <LinearProgress variant="determinate" value={uploadProgress} color="warning" sx={{ height: 4 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-            <Typography variant="body2">{uploadProgress}%</Typography>
-            <Button size="small" color="error" onClick={cancelUpload}>
-              Cancel
-            </Button>
-          </Box>
+          <CircularProgress size={24} />
+          <Typography variant="body2">{uploadProgress}%</Typography>
+          <Button
+            size="small"
+            color="error"
+            onClick={cancelUpload}
+            sx={{ textTransform: 'none', minWidth: 'auto', p: 0 }}
+          >
+            Cancel
+          </Button>
         </Box>
       )}
 
