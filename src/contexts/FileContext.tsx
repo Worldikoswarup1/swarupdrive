@@ -166,6 +166,11 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
       const response = await axios.get(`${API_URL}/api/files/${fileId}/content`, authHeaders);
       return response.data.content;
     } catch (err: any) {
+      // *** THIS BLOCK MUST BE EXACT ***
+      if (err.response?.status === 403) {
+        // wrap 403 in our sentinel
+        throw new Error('not-authorized');
+      }
       setError(err.response?.data?.message || 'Failed to get file content');
       throw err;
     } finally {
