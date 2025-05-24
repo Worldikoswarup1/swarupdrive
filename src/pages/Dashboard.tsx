@@ -1,5 +1,6 @@
 //src/pages/Dashboard.tsx
 import React, { useState } from 'react';
+import { LinearProgress, Typography } from '@mui/material';
 import { 
   Box,
   Container,
@@ -30,6 +31,7 @@ import JoinTeamDialog from '../components/JoinTeamDialog';
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tabValue, setTabValue] = useState(0);
@@ -130,8 +132,28 @@ const Dashboard: React.FC = () => {
               {showUpload ? "Close" : "Upload File"}
             </Button>
           </Box>
-          
-          {showUpload && <FileUpload />}
+          {showUpload && (
+            <>
+              {/*  🟡 yellow progress bar + message */}
+              {uploading && (
+                <Box sx={{ mb: 2 }}>
+                  <LinearProgress color="warning" />
+                  <Typography 
+                    variant="subtitle2" 
+                    align="center" 
+                    sx={{ mt: 1, color: 'text.secondary' }}
+                  >
+                    File is being uploaded. Hold on please…
+                  </Typography>
+                </Box>
+              )}
+              <FileUpload
+                // let Dashboard know when uploading starts/ends
+                onUploadStart={() => setUploading(true)}
+                onUploadEnd={()   => setUploading(false)}
+              />
+            </>
+          )}
           
           <Paper sx={{ width: '100%' }}>
             <Tabs
