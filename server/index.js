@@ -635,13 +635,28 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     
     // Download from Supabase Storage
     const key = file.storage_path;
-    const { data: downloadStream, error: downloadError } = await supabase
-      .storage
-      .from(BUCKET)
-      .download(key);
+  
+    if (!BUCKET) {
+      console.error('🔴 Supabase bucket not configured (BUCKET is empty)');
+      return res.status(500).json({ message: 'Server misconfiguration: storage bucket not set' });
+    }
+    const { data: downloadStream, error: downloadError, status: downloadStatus } =
+      await supabase
+        .storage
+        .from(BUCKET)
+        .download(key);
+  
     if (downloadError) {
-      console.error('Supabase download error:', downloadError);
-      return res.status(404).json({ message: 'File not found' });
+      console.error(
+        `🔴 Supabase download error (status ${downloadStatus}):`,
+        downloadError
+      );
+      return res
+        .status(500)
+        .json({
+          message: 'Error downloading file from storage',
+          detail: downloadError.message
+        });
     }
   
     // Stream raw bytes into a string (for text files) or pipe directly
