@@ -616,68 +616,46 @@ app.get('/api/files/:id/share', authenticateToken, async (req, res) => {
 
 
 app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  
   try {
-    // Check if user has access to file
-    const accessCheck = await pool.query(
+    // 1) Access check as before…
+    const { rows } = await pool.query(
       `SELECT f.* FROM files f
        JOIN user_files uf ON f.id = uf.file_id
        WHERE f.id = $1 AND uf.user_id = $2`,
-      [id, req.user.id]
+      [req.params.id, req.user.id]
     );
-    
-    if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ message: 'You do not have access to this file' });
-    }
-    
-    const file = accessCheck.rows[0];
-    
-    // Download from Supabase Storage
-    const key = file.storage_path;
-  
-    if (!BUCKET) {
-      console.error('🔴 Supabase bucket not configured (BUCKET is empty)');
-      return res.status(500).json({ message: 'Server misconfiguration: storage bucket not set' });
-    }
-    const { data: downloadStream, error: downloadError, status: downloadStatus } =
-      await supabase
-        .storage
-        .from(BUCKET)
-        .download(key);
-  
+    if (rows.length === 0) return res.status(403).json({ message: 'Access denied' });
+    const file = rows[0];
+
+    // 2) Download into a buffer
+    const { data: stream, error: downloadError, status } =
+      await supabase.storage.from(BUCKET).download(file.storage_path);
     if (downloadError) {
-      console.error(
-        `🔴 Supabase download error (status ${downloadStatus}):`,
-        downloadError
-      );
-      return res
-        .status(500)
-        .json({
-          message: 'Error downloading file from storage',
-          detail: downloadError.message
-        });
+      console.error(`Supabase download error (${status}):`, downloadError);
+      return res.status(404).json({ message: 'File not found in storage' });
     }
-  
-    // Stream raw bytes into a string (for text files) or pipe directly
+    const arrayBuffer = await stream.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // 3) Decrypt if needed, then return text
+    let content;
     if (file.encrypted && file.iv && file.auth_tag) {
-      // collect buffer
-      const chunks = [];
-      downloadStream.on('data', c => chunks.push(c));
-      downloadStream.on('end', () => {
-        const hex = Buffer.concat(chunks).toString('hex');
-        const decrypted = decrypt({ iv: file.iv, content: hex, authTag: file.auth_tag });
-        res.json({ content: decrypted });
+      content = decrypt({
+        iv: file.iv,
+        content: buffer.toString('hex'),
+        authTag: file.auth_tag
       });
     } else {
-      // For plaintext, read buffer → to string
-      const chunks = [];
-      downloadStream.on('data', c => chunks.push(c));
-      downloadStream.on('end', () => {
-        res.json({ content: Buffer.concat(chunks).toString('utf8') });
-      });
+      content = buffer.toString('utf8');
     }
-  
+
+    return res.json({ content });
+  } catch (err) {
+    console.error('Error fetching file content:', err);
+    return res.status(500).json({ message: 'Failed to get file content', detail: err.message });
+  }
+});
+
   } catch (err) {
     console.error('Error fetching file content:', err);
     res.status(500).json({ message: 'Failed to get file content' });
