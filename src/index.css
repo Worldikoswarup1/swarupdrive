@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes dots {
+  0%, 20% { color: transparent; }
+  40%, 60% { color: inherit; }
+  80%, 100% { color: transparent; }
+}
+
+/* Ensure the dots span picks up the animation */
+.dots {
+  display: inline-block;
+}
