@@ -148,32 +148,8 @@ const Dashboard: React.FC = () => {
               {uploading ? "Uploading…" : showUpload ? "Close" : "Upload File"}
             </Button>
           </Box>
-          {((showUpload) || uploading) && (
-            <>
-              {/*  🟡 yellow progress bar + message */}
-                  {uploading && (
-                    <Box sx={{ mb: 2, textAlign: 'center' }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={uploadProgress}
-                        color="warning"
-                      />
-                      <Typography variant="subtitle2" sx={{ mt: 1, color: 'text.secondary' }}>
-                        {uploadProgress}% processed
-                      </Typography>
-                      <Button
-                        sx={{ mt: 1 }}
-                        color="error"
-                        onClick={cancelUpload}
-                      >
-                        Cancel
-                      </Button>
-                    </Box>
-                  )}
-               <FileUpload />
-            </>
-          )}
           
+          {(showUpload || uploading) && <FileUpload />}
           <Paper sx={{ width: '100%' }}>
             <Tabs
               value={tabValue}
