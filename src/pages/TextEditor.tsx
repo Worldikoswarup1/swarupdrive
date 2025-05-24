@@ -72,9 +72,13 @@ const TextEditor: React.FC = () => {
         const fileContent = await getFileContent(fileId);
         setContent(fileContent);
         setOriginalContent(fileContent);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading file content:', err);
-        setError('Failed to load file content');
+        if (err.message === 'not-authorized') {
+          setError("You don't have access to this file");
+        } else {
+          setError('Failed to load file content');
+        }
       }
     };
 
