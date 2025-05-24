@@ -136,7 +136,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CircularProgress size={24} />
               <Typography>{progress}%</Typography>
-              <Button onClick={() => abortControllerRef.current?.abort()}>
+              <Button color="error" onClick={() => abortControllerRef.current?.abort()}>
                 Cancel
               </Button>
             </Box>
