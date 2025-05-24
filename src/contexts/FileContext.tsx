@@ -25,6 +25,7 @@ interface FileContextType {
     file: File,
     opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
   ) => Promise<void>;
+  uploading: boolean;
   deleteFile: (fileId: string) => Promise<void>;
   downloadFile: (fileId: string) => Promise<void>;
   getFileContent: (fileId: string) => Promise<string>;
@@ -60,6 +61,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const { token } = useAuth();
 
@@ -106,6 +108,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     file: File,
     opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
   ) => {
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -126,6 +129,9 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to upload file');
       throw err;
+    }
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -266,6 +272,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
         getShareToken,
         joinTeam,
         setSelectedFile,
+        uploading,
       }}
     >
       {children}
