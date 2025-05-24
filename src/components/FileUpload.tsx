@@ -112,9 +112,12 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             },
           }}
         >
-          File is being uploaded to SwarupDrive. Hold on please
+          <span className="shimmer animate-shimmer">
+            File is being uploaded to SwarupDrive. Hold on please
+          </span>
           <span className="dots">...</span>
         </Typography>
+
       )}
         
       {/* ── GOOGLE‑CLASSROOM‑STYLE PROGRESS LINE ── */}
