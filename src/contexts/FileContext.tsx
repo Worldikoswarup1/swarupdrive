@@ -152,7 +152,8 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       await axios.delete(`${API_URL}/api/files/${fileId}`, authHeaders);
-      setFiles(files.filter(file => file.id !== fileId));
+      // use functional update to avoid stale closures
+      setFiles(prev => prev.filter(file => file.id !== fileId));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete file');
       throw err;
