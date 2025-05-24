@@ -26,6 +26,8 @@ interface FileContextType {
     opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
   ) => Promise<void>;
   uploading: boolean;
+  uploadProgress: number;
+  cancelUpload: () => void;
   deleteFile: (fileId: string) => Promise<void>;
   downloadFile: (fileId: string) => Promise<void>;
   getFileContent: (fileId: string) => Promise<string>;
@@ -62,6 +64,9 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  // ⬇️ track progress & controller globally
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadController, setUploadController] = useState<AbortController | null>(null);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const { token } = useAuth();
 
@@ -108,7 +113,11 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     file: File,
     opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
   ) => {
+    // create and hold onto the controller
+    const controller = new AbortController();
+    setUploadController(controller);
     setUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -117,20 +126,25 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
         `${API_URL}/api/files/upload`,
         formData,
         {
-          headers: {
-            ...authHeaders.headers,
-            'Content-Type': 'multipart/form-data',
+          headers: { ...authHeaders.headers, 'Content-Type': 'multipart/form-data' },
+          signal: controller.signal,
+          onUploadProgress: (e) => {
+            if (e.total) {
+              const pct = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(pct);
+            }
           },
-          signal: opts?.signal,
-          onUploadProgress: opts?.onUploadProgress,
         }
-      );
+      ); 
+      
       setFiles(prev => [response.data.file, ...prev]);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to upload file');
       throw err;
     } finally {
+      // cleanup
       setUploading(false);
+      setUploadController(null);
     }
   };
 
@@ -272,6 +286,8 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
         joinTeam,
         setSelectedFile,
         uploading,
+        uploadProgress,
+        cancelUpload: () => uploadController?.abort(),
       }}
     >
       {children}
