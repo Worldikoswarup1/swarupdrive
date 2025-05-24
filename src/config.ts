@@ -1,9 +1,14 @@
 //src/config.ts
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// If VITE_API_URL is set, use it; otherwise, assume the same host as the web page
+export const API_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL
+  : `${window.location.protocol}//${window.location.host}`;
 
-// by default, if we're not on localhost, use the same host as API but speak WebSockets
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL;
+// For sockets, same deal—use VITE_SOCKET_URL if provided, else derive from the page URL
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
+  ? import.meta.env.VITE_SOCKET_URL
+  : API_URL;
 
 
 // Security Configuration
