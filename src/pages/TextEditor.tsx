@@ -74,6 +74,7 @@ const TextEditor: React.FC = () => {
         setOriginalContent(fileContent);
       } catch (err: any) {
         console.error('Error loading file content:', err);
+        // if we threw our "not-authorized" sentinel, show the access‐denied copy
         if (err.message === 'not-authorized') {
           setError("You don't have access to this file");
         } else {
