@@ -13,7 +13,12 @@ import {
   Typography,
   Paper,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import { 
   InsertDriveFile as FileIcon, 
@@ -43,6 +48,7 @@ const FileList: React.FC = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const handleMoreClick = (event: React.MouseEvent<HTMLElement>, fileId: string) => {
@@ -73,11 +79,23 @@ const FileList: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleDelete = async () => {
+  // open confirmation dialog instead of immediate delete
+  const handleDelete = () => {
+    setConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  // if user confirms, actually delete and close dialog
+  const handleConfirmDelete = async () => {
     if (selectedFileId) {
       await deleteFile(selectedFileId);
     }
-    handleMenuClose();
+    setConfirmOpen(false);
+  };
+
+  // close dialog without deleting
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
   };
 
   const getFileIcon = (file: FileItem) => {
@@ -318,6 +336,30 @@ const FileList: React.FC = () => {
           fileId={selectedFileId}
         />
       )}
+
+    {/* ── CONFIRM DELETE DIALOG ── */}
+    <Dialog
+     open={confirmOpen}
+      onClose={handleCancelDelete}
+      aria-labelledby="confirm-delete-title"
+    >
+      <DialogTitle id="confirm-delete-title">
+        This cannot be undone. Delete?
+      </DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to permanently delete this file?
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCancelDelete}>
+          No
+        </Button>
+        <Button color="error" onClick={handleConfirmDelete}>
+          Yes
+        </Button>
+      </DialogActions>
+    </Dialog>      
     </Box>
   );
 };
