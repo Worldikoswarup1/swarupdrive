@@ -83,8 +83,13 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
       );
       setFiles(sorted);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch files');
-      console.error('Error fetching files:', err);
+      if (err.response?.status === 403) {
+        // Not authorized
+        const e = new Error('not-authorized');
+        throw e;
+      }
+      setError(err.response?.data?.message || 'Failed to get file content');
+      throw err;
     } finally {
       setLoading(false);
     }
