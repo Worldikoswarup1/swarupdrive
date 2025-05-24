@@ -133,7 +133,7 @@ const io = new Server(server, {
 // Middleware
 app.use(cors({
   origin: checkOrigin,
-  methods: ['GET','POST','PUT','','OPTIONS'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type','Authorization'],
 }));
