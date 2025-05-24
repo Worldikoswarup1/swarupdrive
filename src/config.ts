@@ -3,8 +3,7 @@
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // by default, if we're not on localhost, use the same host as API but speak WebSockets
-const _base = import.meta.env.VITE_SOCKET_URL || API_URL;
-export const SOCKET_URL = _base.replace(/^http/, window.location.protocol === 'https:' ? 'wss' : 'ws');
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL;
 
 
 // Security Configuration
