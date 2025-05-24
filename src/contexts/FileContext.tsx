@@ -100,6 +100,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   }, [token]);    // only re-create when token changes
 
   const uploadFile = async (file: File) => {
+    try {
       const formData = new FormData();
       formData.append('file', file);
 
