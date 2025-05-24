@@ -20,12 +20,12 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
    }
   
   const FileUpload: React.FC<FileUploadProps> = ({ onUploadStart, onUploadEnd }) => {
-  const { uploadFile } = useFiles();
+    // grab everything you need from context in one go
+  const { uploadFile, uploading, uploadProgress, cancelUpload } = useFiles();
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploading, uploadProgress, cancelUpload } = useFiles();
   const abortControllerRef = useRef<AbortController | null>(null);
     
   const handleDragOver = (e: React.DragEvent) => {
@@ -153,7 +153,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             variant="contained"
             onClick={handleButtonClick}
             startIcon={<UploadIcon />}
-            disabled={localUploading}
+            disabled={uploading}
           >
             Upload File
           </Button>
