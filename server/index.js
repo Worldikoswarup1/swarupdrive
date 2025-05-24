@@ -163,31 +163,30 @@ const authenticateToken = (req, res, next) => {
 
 // Encryption/Decryption functions
 
+// AES-256-GCM using Base64 encoding
+
 const encrypt = (text) => {
-  const iv = crypto.randomBytes(IV_LENGTH);                           // 12-byte IV
-  const cipher = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  
-  const authTag = cipher.getAuthTag();
-  
+  const iv       = crypto.randomBytes(12); // 12-byte IV
+  const cipher   = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
+  let encrypted  = cipher.update(text, 'utf8', 'base64');
+      encrypted += cipher.final('base64');
+  const authTag  = cipher.getAuthTag();
+
   return {
-    iv: iv.toString('hex'),                                           // store hex-encoded IV
-    content: encrypted,
-    authTag: authTag.toString('hex'),                                 // store hex-encoded tag
+    iv:      iv.toString('base64'),        // store Base64 IV
+    content: encrypted,                    // Base64 ciphertext
+    authTag: authTag.toString('base64'),   // Base64 auth tag
   };
 };
 
 const decrypt = ({ iv, content, authTag }) => {
-  const ivBuf      = Buffer.from(iv, 'hex');
-  const tagBuf     = Buffer.from(authTag, 'hex');
+  const ivBuf      = Buffer.from(iv, 'base64');
+  const tagBuf     = Buffer.from(authTag, 'base64');
   const decipher   = crypto.createDecipheriv('aes-256-gcm', ENCRYPTION_KEY, ivBuf);
-
   decipher.setAuthTag(tagBuf);
 
-  let decrypted = decipher.update(content, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
+  let decrypted = decipher.update(content, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
   return decrypted;
 };
 
@@ -634,22 +633,23 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
       console.error(`Supabase download error (${status}):`, downloadError);
       return res.status(404).json({ message: 'File not found in storage' });
     }
-    const arrayBuffer = await stream.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
-    // 3) Decrypt if needed, then return text
-    let content;
-    if (file.encrypted && file.iv && file.auth_tag) {
-      content = decrypt({
-        iv: file.iv,
-        content: buffer.toString('utf8'),
-        authTag: file.auth_tag
-      });
-    } else {
-      content = buffer.toString('utf8');
-    }
+   // 3) Read the Base64 ciphertext string
+   const arrayBuffer = await stream.arrayBuffer();
+   const buffer = Buffer.from(arrayBuffer);
+   const base64 = buffer.toString('utf8');  // Base64‐encoded ciphertext
 
-    return res.json({ content });
+   // 4) Decrypt if needed, else return plaintext directly
+   const plaintext = file.encrypted && file.iv && file.auth_tag
+     ? decrypt({
+         iv: file.iv,
+         content: base64,
+         authTag: file.auth_tag
+       })
+     : base64;
+
+   return res.json({ content: plaintext });
+
   } catch (err) {
     console.error('Error fetching file content:', err);
     return res.status(500).json({ message: 'Failed to get file content', detail: err.message });
