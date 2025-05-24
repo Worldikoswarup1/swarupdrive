@@ -1,11 +1,11 @@
 //src/pages/Dashboard.tsx
 import React, { useState } from 'react';
-import { LinearProgress, Typography } from '@mui/material';
 import { useFiles } from '../contexts/FileContext';  
 import { 
   Box,
   Container,
   Typography,
+  LinearProgress,
   Button,
   AppBar,
   Toolbar,
