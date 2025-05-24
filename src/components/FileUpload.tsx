@@ -105,8 +105,10 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           variant="body2"
           align="center"
           sx={{
-            mt: 0.5,
+            mt: 0,
             mb: 0.5,
+            fontSize: '0.875rem',  // smaller than the default body2
+            lineHeight: 1.3,        // tighten line-height if needed
             '& .dots': {
               animation: 'dots 1s steps(5,end) infinite',
             },
