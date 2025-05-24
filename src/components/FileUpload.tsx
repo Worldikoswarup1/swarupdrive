@@ -13,7 +13,12 @@ import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import { useFiles } from '../contexts/FileContext';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
 
-const FileUpload: React.FC = () => {
+   interface FileUploadProps {
+     onUploadStart?: () => void;
+     onUploadEnd?: () => void;
+   }
+  
+   const FileUpload: React.FC<FileUploadProps> = ({ onUploadStart, onUploadEnd }) => {
   const { uploadFile } = useFiles();
   const [dragging, setDragging] = useState(false);
   const [localUploading, setLocalUploading] = useState(false);
@@ -58,6 +63,7 @@ const FileUpload: React.FC = () => {
     }
 
     try {
+      onUploadStart?.();                   // 🚀 notify parent
       setLocalUploading(true);
       setError(null);
       await uploadFile(file);
@@ -67,6 +73,7 @@ const FileUpload: React.FC = () => {
       console.error(err);
     } finally {
       setLocalUploading(false);
+      onUploadEnd?.();                     // 🚀 notify parent
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
