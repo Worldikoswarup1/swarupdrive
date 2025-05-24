@@ -1,5 +1,5 @@
 //src/contexts/FileContext.tsx
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
@@ -70,7 +70,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     }
   }, [token]);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     if (!token) return;
     
     try {
@@ -88,7 +88,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);    // only re-create when token changes
 
   const uploadFile = async (file: File) => {
     try {
@@ -151,7 +151,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     }
   };
 
-  const getFileContent = async (fileId: string): Promise<string> => {
+  const getFileContent = useCallback(async (fileId: string): Promise<string> => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/files/${fileId}/content`, authHeaders);
@@ -162,9 +162,9 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const updateFileContent = async (fileId: string, content: string) => {
+  const updateFileContent = useCallback(async (fileId: string, content: string) => {
     try {
       setLoading(true);
       await axios.put(
@@ -178,7 +178,7 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   const shareFile = async (fileId: string): Promise<string> => {
     try {
