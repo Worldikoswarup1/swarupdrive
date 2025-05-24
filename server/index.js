@@ -179,16 +179,30 @@ const encrypt = (text) => {
   };
 };
 
-const decrypt = ({ iv, content, authTag }) => {
-  const ivBuf      = Buffer.from(iv, 'base64');
-  const tagBuf     = Buffer.from(authTag, 'base64');
-  const decipher   = crypto.createDecipheriv('aes-256-gcm', ENCRYPTION_KEY, ivBuf);
-  decipher.setAuthTag(tagBuf);
+ const decrypt = ({ iv, content, authTag }) => {
+   // Auto-detect hex vs. base64 for IV and authTag
+   const isHex = (str: string) => /^[0-9a-fA-F]+$/.test(str);
 
-  let decrypted = decipher.update(content, 'base64', 'utf8');
-      decrypted += decipher.final('utf8');
-  return decrypted;
-};
+   const ivBuf  = isHex(iv)
+     ? Buffer.from(iv, 'hex')
+     : Buffer.from(iv, 'base64');
+   const tagBuf = isHex(authTag)
+     ? Buffer.from(authTag, 'hex')
+     : Buffer.from(authTag, 'base64');
+
+   const decipher = crypto.createDecipheriv('aes-256-gcm', ENCRYPTION_KEY, ivBuf);
+   decipher.setAuthTag(tagBuf);
+
+   // Decrypt—if content was stored as base64, decode from base64; otherwise assume utf8 plaintext
+   const encrypted = content;
+   const isBase64  = !isHex(content);
+   let decrypted = isBase64
+     ? decipher.update(encrypted, 'base64', 'utf8')
+     : decipher.update(encrypted, 'utf8', 'utf8');
+   decrypted += decipher.final('utf8');
+
+   return decrypted;
+ };
 
 
 
