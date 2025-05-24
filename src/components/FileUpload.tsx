@@ -97,6 +97,26 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           transition: 'all 0.2s ease-in-out',
         }}
       >
+
+
+      {/* ── UPLOAD STATUS MESSAGE ── */}
+      {uploading && (
+        <Typography
+          variant="body2"
+          align="center"
+          sx={{
+            mt: 1,
+            mb: 2,
+            '& .dots': {
+              animation: 'dots 1s steps(5,end) infinite',
+            },
+          }}
+        >
+          File is being uploaded to SwarupDrive. Hold on please
+          <span className="dots">...</span>
+        </Typography>
+      )}
+        
       {/* ── GOOGLE‑CLASSROOM‑STYLE PROGRESS LINE ── */}
       {uploading && (
         <LinearProgress
@@ -123,7 +143,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           }}
         >
           <CircularProgress size={24} />
-          <Typography variant="body2">{uploadProgress}%</Typography>
+          <Typography variant="body2">{uploadProgress}% processed</Typography>
           <Button
             size="small"
             color="error"
