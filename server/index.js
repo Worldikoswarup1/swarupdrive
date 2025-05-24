@@ -444,8 +444,8 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const encrypted = encrypt(fileContent);
       
-      // Save the encrypted content back to the file
-      fs.writeFileSync(filePath, encrypted.content, 'hex');
+      // Save the encrypted *hex string* back to the file (utf8)
+      fs.writeFileSync(filePath, encrypted.content, 'utf8');
       
       iv = encrypted.iv;
       authTag = encrypted.authTag;
@@ -642,7 +642,7 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     if (file.encrypted && file.iv && file.auth_tag) {
       content = decrypt({
         iv: file.iv,
-        content: buffer.toString('hex'),
+        content: buffer.toString('utf8'),
         authTag: file.auth_tag
       });
     } else {
