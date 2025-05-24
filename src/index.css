@@ -22,9 +22,9 @@
   /* yellow-to-light gradient */
   background: linear-gradient(
     90deg,
-    #fdd835 20%,
-    #fff59d 50%,
-    #fdd835 80%
+    #bbbbbb 20%,
+    #eeeeee 50%,
+    #bbbbbb 80%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
