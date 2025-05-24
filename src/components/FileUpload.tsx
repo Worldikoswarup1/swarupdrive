@@ -16,7 +16,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
 const FileUpload: React.FC = () => {
   const { uploadFile } = useFiles();
   const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [localUploading, setLocalUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +58,7 @@ const FileUpload: React.FC = () => {
     }
 
     try {
-      setUploading(true);
+      setLocalUploading(true);
       setError(null);
       await uploadFile(file);
       setSuccess(true);
@@ -66,7 +66,7 @@ const FileUpload: React.FC = () => {
       setError("Failed to upload file");
       console.error(err);
     } finally {
-      setUploading(false);
+      setLocalUploading(false);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -109,8 +109,8 @@ const FileUpload: React.FC = () => {
             ref={fileInputRef}
           />
           
-          {uploading ? (
-            <CircularProgress size={40} />
+          {localUploading ? (
+            <CircularProgress size={24} />
           ) : (
             <UploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
           )}
