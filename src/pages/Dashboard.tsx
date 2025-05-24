@@ -150,10 +150,7 @@ const Dashboard: React.FC = () => {
                   </Typography>
                 </Box>
               )}
-               <FileUpload
-                 onUploadStart={() => setUploading(true)}
-                 onUploadEnd={()   => setUploading(false)}
-               />
+               <FileUpload />
             </>
           )}
           
