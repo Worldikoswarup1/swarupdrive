@@ -105,22 +105,21 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
           variant="body2"
           align="center"
           sx={{
-            mt: 0,
-            mb: 0.5,
-            fontSize: '0.875rem',  // smaller than the default body2
-            lineHeight: 1.3,        // tighten line-height if needed
-            '& .dots': {
+            mt: 0,                  // no gap above (directly under LinearProgress)
+            mb: 0,                  // no gap below before the next row
+            fontSize: '0.75rem',    // shrink text more
+            lineHeight: 1.2,        // tighter line-height
+           '& .dots': {
               animation: 'dots 1s steps(5,end) infinite',
             },
           }}
         >
 
-         {/* wave gradient over text */}
-        <span className="wave-text">
-          File is being uploaded to SwarupDrive. Hold on please
-        </span>
-         {/* keep your three-dot animation */}
-         <span className="dots">...</span>
+          {/* wave-gradient text */}
+          <span className="wave-text">
+            File is being uploaded to SwarupDrive. Hold on please
+          </span>
+          <span className="dots">...</span>
         </Typography>
       )}
         
