@@ -136,7 +136,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '../config';
             variant="contained"
             onClick={handleButtonClick}
             startIcon={<UploadIcon />}
-            disabled={uploading}
+            disabled={localUploading}
           >
             Upload File
           </Button>
