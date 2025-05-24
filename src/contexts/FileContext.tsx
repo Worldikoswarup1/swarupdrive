@@ -100,8 +100,6 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   }, [token]);    // only re-create when token changes
 
   const uploadFile = async (file: File) => {
-    try {
-      setLoading(true);
       const formData = new FormData();
       formData.append('file', file);
 
@@ -116,8 +114,6 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to upload file');
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
