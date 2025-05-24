@@ -124,15 +124,20 @@ const Dashboard: React.FC = () => {
             <Typography variant="h4" component="h1" gutterBottom>
               My Files
             </Typography>
-            <Button 
-              variant="contained" 
-              startIcon={showUpload ? undefined : <AddIcon />}
+            <Button
+              variant="contained"
+              startIcon={!showUpload && !uploading ? <AddIcon /> : undefined}
               onClick={toggleUpload}
+              disabled={uploading}
             >
-              {showUpload ? "Close" : "Upload File"}
+              {uploading
+                ? "Uploading…"
+                : showUpload
+                  ? "Close"
+                  : "Upload File"}
             </Button>
           </Box>
-          {showUpload && (
+          {(showUpload || uploading) && (
             <>
               {/*  🟡 yellow progress bar + message */}
               {uploading && (
