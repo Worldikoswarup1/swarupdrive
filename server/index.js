@@ -788,6 +788,7 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
 });
 
 app.delete('/api/files/:id/delete', authenticateToken, async (req, res) => {
+  console.log('🔴 DELETE handler hit for id =', req.params.id);
   const { id } = req.params;
   
   try {
@@ -796,6 +797,7 @@ app.delete('/api/files/:id/delete', authenticateToken, async (req, res) => {
       'SELECT * FROM files WHERE id = $1 AND owner_id = $2',
       [id, req.user.id]
     );
+    console.log('ownerCheck rows:', ownerCheck.rows);
     if (ownerCheck.rows.length > 0) {
       // User is the owner: fully 
       const file = ownerCheck.rows[0];
