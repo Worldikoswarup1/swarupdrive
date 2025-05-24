@@ -133,7 +133,7 @@ const io = new Server(server, {
 // Middleware
 app.use(cors({
   origin: checkOrigin,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  methods: ['GET','POST','PUT','','OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type','Authorization'],
 }));
@@ -241,7 +241,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS shares (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        file_id UUID REFERENCES files(id) ON DELETE CASCADE,
+        file_id UUID REFERENCES files(id) ON  CASCADE,
         token TEXT UNIQUE NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP WITH TIME ZONE
@@ -251,8 +251,8 @@ const initDatabase = async () => {
     // Create user_files table for tracking which users have access to which files
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_files (
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        file_id UUID REFERENCES files(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON  CASCADE,
+        file_id UUID REFERENCES files(id) ON  CASCADE,
         permission TEXT NOT NULL DEFAULT 'read', -- 'read', 'write'
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, file_id)
@@ -263,7 +263,7 @@ const initDatabase = async () => {
     //create music-metadata tables
     await pool.query(`
       CREATE TABLE IF NOT EXISTS music_metadata (
-        file_id UUID PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
+        file_id UUID PRIMARY KEY REFERENCES files(id) ON  CASCADE,
         title TEXT NOT NULL,
         artist TEXT,
         album TEXT,
@@ -276,7 +276,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS otps (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON  CASCADE,
         code TEXT NOT NULL,
         expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -287,7 +287,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS face_data (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON  CASCADE,
         descriptor JSONB NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
@@ -296,7 +296,7 @@ const initDatabase = async () => {
     // Video metadata table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS video_metadata (
-        file_id     UUID        PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
+        file_id     UUID        PRIMARY KEY REFERENCES files(id) ON  CASCADE,
         title       TEXT        NOT NULL,
         description TEXT,
         duration    INTEGER,     -- duration in seconds
@@ -787,14 +787,17 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
   }
 });
 
-
+app.delete('/api/files/:id/delete', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
     // First, check ownership
     const ownerCheck = await pool.query(
       'SELECT * FROM files WHERE id = $1 AND owner_id = $2',
       [id, req.user.id]
     );
     if (ownerCheck.rows.length > 0) {
-      // User is the owner: fully delete
+      // User is the owner: fully 
       const file = ownerCheck.rows[0];
       const filePath = path.join(STORAGE_DIR, file.storage_path);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
