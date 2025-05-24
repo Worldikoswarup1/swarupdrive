@@ -1,6 +1,7 @@
 //src/pages/Dashboard.tsx
 import React, { useState } from 'react';
 import { LinearProgress, Typography } from '@mui/material';
+import { useFiles } from '../contexts/FileContext';  
 import { 
   Box,
   Container,
@@ -30,6 +31,7 @@ import JoinTeamDialog from '../components/JoinTeamDialog';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const { uploading } = useFiles();   
   const navigate = useNavigate();
   // remove local uploading
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
