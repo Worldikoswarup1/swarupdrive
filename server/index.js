@@ -656,12 +656,6 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
   }
 });
 
-  } catch (err) {
-    console.error('Error fetching file content:', err);
-    res.status(500).json({ message: 'Failed to get file content' });
-  }
-});
-
 app.put('/api/files/:id/content', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
