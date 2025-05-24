@@ -129,7 +129,6 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to upload file');
       throw err;
-    }
     } finally {
       setUploading(false);
     }
