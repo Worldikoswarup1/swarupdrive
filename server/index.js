@@ -692,22 +692,28 @@ app.put('/api/files/:id/content', authenticateToken, async (req, res) => {
     }
     
     const file = accessCheck.rows[0];
+  // Encrypt content (Base64 iv/content/authTag)
+  const encrypted = encrypt(content);
+
+  // 1) Push the new ciphertext to Supabase Storage
+  const { error: uploadError } = await supabase
+    .storage
+    .from(BUCKET)
+    .update(file.storage_path, Buffer.from(encrypted.content, 'utf8'));
+  if (uploadError) {
+    console.error('Error updating storage:', uploadError);
+    return res.status(500).json({ message: 'Failed to upload updated content', detail: uploadError.message });
+  }
+
+  // 2) Update iv/auth_tag in database
+  await pool.query(
+    `UPDATE files SET iv = $1, auth_tag = $2, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $3`,
+    [encrypted.iv, encrypted.authTag, id]
+  );
+
+  return res.json({ message: 'File content updated successfully' });  
     
-    // Encrypt content
-    const encrypted = encrypt(content);
-    
-    // Write to file
-    const filePath = path.join(STORAGE_DIR, file.storage_path);
-    fs.writeFileSync(filePath, encrypted.content, 'hex');
-    
-    // Update file metadata
-    await pool.query(
-      `UPDATE files SET iv = $1, auth_tag = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3`,
-      [encrypted.iv, encrypted.authTag, id]
-    );
-    
-    res.json({ message: 'File content updated successfully' });
   } catch (err) {
     console.error('Error updating file content:', err);
     res.status(500).json({ message: 'Failed to update file content' });
