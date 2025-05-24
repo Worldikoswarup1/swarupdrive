@@ -1019,7 +1019,15 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.user.id}`);
   
   socket.on('join-edit-room', async ({ fileId }) => {
-    // Join the socket room for this file
+    // Check DB for write or read access
+    const { rows } = await pool.query(
+      `SELECT 1 FROM user_files WHERE file_id=$1 AND user_id=$2`,
+      [fileId, socket.user.id]
+    );
+    if (rows.length === 0) {
+      // Deny join—no access
+      return socket.emit('error', { message: 'Access denied to this file' });
+    }
     socket.join(`file:${fileId}`);
     
     // If room doesn't exist yet, initialize it
