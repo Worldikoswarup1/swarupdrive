@@ -90,7 +90,9 @@ const FileList: React.FC = () => {
     if (selectedFileId) {
       await deleteFile(selectedFileId);
     }
+    // close dialog AND clear the selected file
     setConfirmOpen(false);
+    setSelectedFileId(null);
   };
 
   // close dialog without deleting
