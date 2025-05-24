@@ -91,8 +91,11 @@ const FileList: React.FC = () => {
       if (selectedFileId) {
         await deleteFile(selectedFileId);
       }
+    } catch (err: any) {
+      // you can show a Snackbar or console log
+      console.error('Delete failed:', err);
     } finally {
-      // always close and clear, even if deleteFile threw
+      // always close the dialog and reset selection
       setConfirmOpen(false);
       setSelectedFileId(null);
     }
