@@ -181,7 +181,7 @@ const encrypt = (text) => {
 
  const decrypt = ({ iv, content, authTag }) => {
    // Auto-detect hex vs. base64 for IV and authTag
-   const isHex = (str: string) => /^[0-9a-fA-F]+$/.test(str);
+   const isHex = (str) => /^[0-9a-fA-F]+$/.test(str);
 
    const ivBuf  = isHex(iv)
      ? Buffer.from(iv, 'hex')
