@@ -87,12 +87,15 @@ const FileList: React.FC = () => {
 
   // if user confirms, actually delete and close dialog
   const handleConfirmDelete = async () => {
-    if (selectedFileId) {
-      await deleteFile(selectedFileId);
+    try {
+      if (selectedFileId) {
+        await deleteFile(selectedFileId);
+      }
+    } finally {
+      // always close and clear, even if deleteFile threw
+      setConfirmOpen(false);
+      setSelectedFileId(null);
     }
-    // close dialog AND clear the selected file
-    setConfirmOpen(false);
-    setSelectedFileId(null);
   };
 
   // close dialog without deleting
