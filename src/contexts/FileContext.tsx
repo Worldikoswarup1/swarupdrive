@@ -21,7 +21,10 @@ interface FileContextType {
   error: string | null;
   selectedFile: FileItem | null;
   fetchFiles: () => Promise<void>;
-  uploadFile: (file: File) => Promise<void>;
+  uploadFile: (
+    file: File,
+    opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
+  ) => Promise<void>;
   deleteFile: (fileId: string) => Promise<void>;
   downloadFile: (fileId: string) => Promise<void>;
   getFileContent: (fileId: string) => Promise<string>;
@@ -99,18 +102,26 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     }
   }, [token]);    // only re-create when token changes
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (
+    file: File,
+    opts?: { signal?: AbortSignal; onUploadProgress?: (e: ProgressEvent) => void }
+  ) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post(`${API_URL}/api/files/upload`, formData, {
-        headers: {
-          ...authHeaders.headers,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
+      const response = await axios.post(
+        `${API_URL}/api/files/upload`,
+        formData,
+        {
+          headers: {
+            ...authHeaders.headers,
+            'Content-Type': 'multipart/form-data',
+          },
+          signal: opts?.signal,
+          onUploadProgress: opts?.onUploadProgress,
+        }
+      );
       setFiles(prev => [response.data.file, ...prev]);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to upload file');
