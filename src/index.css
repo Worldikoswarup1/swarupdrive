@@ -12,17 +12,22 @@
   display: inline-block;
 }
 
-/* ── shimmer utility ── */
-.shimmer {
+/* ── wave loading effect ── */
+@keyframes wave {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.wave-text {
+  display: inline-block;
+  /* yellow-to-light gradient */
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.5) 50%,
-    rgba(255, 255, 255, 0) 100%
+    #fdd835 20%,
+    #fff59d 50%,
+    #fdd835 80%
   );
-  background-size: 1000px 100%;
-  background-repeat: no-repeat;
+  background-size: 200% auto;
   -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: wave 2s linear infinite;
 }
