@@ -756,61 +756,38 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
       }
       file = rows[0];
     }
-
-    // 2) Resolve on‑disk path
-    const fullPath = path.join(STORAGE_DIR, file.storage_path);
-    if (!fs.existsSync(fullPath)) {
-      return res.status(404).json({ message: 'File not found on disk' });
-    }
-
-    // 3) Handle text‑file decryption (AES‑256‑GCM)
-    if (file.encrypted && file.iv && file.auth_tag && file.type === 'text/plain') {
-      const encryptedHex = fs.readFileSync(fullPath, 'hex');
-      const decrypted = decrypt({
-        iv: file.iv,
-        content: encryptedHex,
-        authTag: file.auth_tag
-      });
-      res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
-      res.setHeader('Content-Type', file.type);
-      return res.send(decrypted);
-    }
-
-    // 4) Support byte‑range streaming for all other file types
-    const stat  = fs.statSync(fullPath);
-    const total = stat.size;
-    const range = req.headers.range;
-
-    if (range) {
-      const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
-      const start = parseInt(startStr, 10);
-      const end   = endStr ? parseInt(endStr, 10) : total - 1;
-
-      if (start >= total || end >= total) {
-        res.status(416).setHeader('Content-Range', `bytes */${total}`);
-        return res.end();
-      }
-
-      const chunkSize = end - start + 1;
-      const stream    = fs.createReadStream(fullPath, { start, end });
-
-      res.writeHead(206, {
-        'Content-Range': `bytes ${start}-${end}/${total}`,
-        'Accept-Ranges': 'bytes',
-        'Content-Length': chunkSize,
-        'Content-Type': file.type
-      });
-      return stream.pipe(res);
-    }
-
-    // 5) No Range requested: send full file
-    res.writeHead(200, {
-      'Content-Length': total,
-      'Content-Type': file.type,
-      'Accept-Ranges': 'bytes'
-    });
-    fs.createReadStream(fullPath).pipe(res);
-
+     // 2) Download raw bytes from Supabase Storage instead of disk
+     const { data: downloadStream, error: downloadError, status } =
+       await supabase
+         .storage
+         .from(BUCKET)
+         .download(file.storage_path);
+    
+     if (downloadError) {
+       console.error(`Supabase download error (status ${status}):`, downloadError);
+       return res.status(404).json({ message: 'File not found in storage' });
+     }
+    
+     // 3) Stream or decrypt as needed
+     if (file.encrypted && file.iv && file.auth_tag && file.type === 'text/plain') {
+       // Collect into buffer, decrypt, then send
+       const chunks = [];
+       downloadStream.on('data', c => chunks.push(c));
+       downloadStream.on('end', () => {
+         const hex = Buffer.concat(chunks).toString('hex');
+         const decrypted = decrypt({ iv: file.iv, content: hex, authTag: file.auth_tag });
+         res
+           .setHeader('Content-Disposition', `attachment; filename="${file.name}"`)
+           .setHeader('Content-Type', file.type)
+           .send(decrypted);
+       });
+     } else {
+       // For binary or plaintext, pipe directly with appropriate headers
+       res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+       res.setHeader('Content-Type', file.type);
+       downloadStream.pipe(res);
+     }
+        
   } catch (err) {
     console.error('Error in /api/files/:id/download:', err);
     res.status(500).json({ message: 'Failed to download file' });
