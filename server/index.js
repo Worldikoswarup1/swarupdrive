@@ -263,7 +263,7 @@ const initDatabase = async () => {
     //create music-metadata tables
     await pool.query(`
       CREATE TABLE IF NOT EXISTS music_metadata (
-        file_id UUID PRIMARY KEY REFERENCES files(id) ON  CASCADE,
+        file_id UUID PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
         title TEXT NOT NULL,
         artist TEXT,
         album TEXT,
