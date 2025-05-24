@@ -84,7 +84,7 @@ const TextEditor: React.FC = () => {
     };
 
     loadFileContent();
-  }, [fileId]);
+  }, [fileId, getFileContent]);
 
   // Join edit room and set up socket listeners
   useEffect(() => {
