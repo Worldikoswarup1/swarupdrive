@@ -109,12 +109,16 @@ const upload = multer({
 const app = express();
 const server = http.createServer(app);
 
-// CORS origin checker
-const FRONTEND_URL = process.env.FRONTEND_URL;            // ← add this key to .env
-const LOCALHOST_REGEX = /^http:\/\/localhost:\d+$/;
+// Allow both localhost and your Vercel front-ends
+const ALLOWED_ORIGINS = [
+  /^http:\/\/localhost:\d+$/,
+  'https://swarupdrive.vercel.app',
+  'https://swarupplay-play3.vercel.app'
+];
+
 function checkOrigin(origin, callback) {
   if (!origin) return callback(null, true);
-  if (origin === FRONTEND_URL || LOCALHOST_REGEX.test(origin)) {
+  if (ALLOWED_ORIGINS.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
     return callback(null, true);
   }
   return callback(new Error(`Origin ${origin} not allowed by CORS`));
