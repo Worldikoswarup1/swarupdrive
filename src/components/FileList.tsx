@@ -193,7 +193,7 @@ const FileList: React.FC = () => {
                       <IconButton
                         edge="end"
                         onClick={() => window.open( 
-                          `http://localhost:8001/watch?play=${file.id}`,
+                          `https://swarupplay-play3.vercel.app/watch?play=${file.id}`,
                           '_blank'
                         )}
                         title="Play video"
