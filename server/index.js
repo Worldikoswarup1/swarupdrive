@@ -287,6 +287,17 @@ const initDatabase = async () => {
       );
     `);
 
+    // Create podcast_sessions table
+    await renderDb.query(`
+      CREATE TABLE IF NOT EXISTS podcast_sessions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name TEXT NOT NULL,
+        host_id UUID NOT NULL,
+        meeting_key TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Face data table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS face_data (
