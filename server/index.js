@@ -311,12 +311,15 @@ const initDatabase = async () => {
     // podcast recording 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS recordings (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          session_id UUID NOT NULL REFERENCES podcast_sessions(id) ON DELETE CASCADE,
-          file_url TEXT NOT NULL,
-          duration INTEGER,
-          created_at TIMESTAMPTZ DEFAULT NOW()
-        );
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        session_id UUID NOT NULL REFERENCES podcast_sessions(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        video_number INTEGER NOT NULL,
+        start_time TIMESTAMPTZ NOT NULL,
+        end_time TIMESTAMPTZ,
+        file_url TEXT, -- optional: populated after upload
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
 
     // Video metadata table
