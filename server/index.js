@@ -308,7 +308,8 @@ const initDatabase = async () => {
       );
     `);
 
-    // podcast recording 
+    
+    // podcast recordings table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS recordings (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -317,8 +318,7 @@ const initDatabase = async () => {
         video_number INTEGER NOT NULL,
         start_time TIMESTAMPTZ NOT NULL,
         end_time TIMESTAMPTZ,
-        file_url TEXT, -- optional: populated after upload
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        video_url TEXT
       );
     `);
 
