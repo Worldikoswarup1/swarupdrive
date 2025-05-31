@@ -288,7 +288,7 @@ const initDatabase = async () => {
     `);
 
     // Create podcast_sessions table
-    await renderDb.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS podcast_sessions (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name TEXT NOT NULL,
