@@ -694,6 +694,10 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     let plaintext;
     if (file.encrypted && file.iv && file.auth_tag) {
       try {
+        // ─── Add this log to check key length ───
+        console.log('→ [DEBUG] ENCRYPTION_KEY length (bytes) =', ENCRYPTION_KEY.length);
+        // ─────────────────────────────────────────
+        
         plaintext = decrypt({
           iv:      file.iv,           // should be Base64 nonce
           content: base64Ciphertext,  // should be Base64 ciphertext
