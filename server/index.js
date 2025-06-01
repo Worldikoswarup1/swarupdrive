@@ -802,8 +802,8 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
       res.setHeader('Content-Type', file.type);
 
       if (file.encrypted && file.iv && file.auth_tag && file.type === 'text/plain') {
-        const hex = buffer.toString('hex');
-        const decrypted = decrypt({ iv: file.iv, content: hex, authTag: file.auth_tag });
+        const base64Ciphertext = buffer.toString('utf8');
+        const decrypted = decrypt({ iv: file.iv, content: base64Ciphertext, authTag: file.auth_tag });
         return res.send(decrypted);
       }
 
