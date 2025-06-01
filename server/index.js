@@ -746,7 +746,10 @@ app.put('/api/files/:id/content', authenticateToken, async (req, res) => {
     const file = accessCheck.rows[0];
   // Encrypt content (Base64 iv/content/authTag)
   const encrypted = encrypt(content);
-
+  console.log('→ [Edit] encrypted.iv    =', encrypted.iv);
+  console.log('→ [Edit] encrypted.authTag=', encrypted.authTag);
+  console.log('→ [Edit] encrypted.content sample =', encrypted.content.slice(0, 30));
+      
   // 1) Push the new ciphertext to Supabase Storage
   const { error: uploadError } = await supabase
     .storage
