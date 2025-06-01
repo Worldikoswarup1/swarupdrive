@@ -671,15 +671,18 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
 
     // 2) Download into a buffer
     // AFTER: add cacheControl and revalidate flags
+  // Append a dummy query param based on a timestamp to force revalidation
+    // Force‐bypass CDN cache by adding a “noCache” query param with current timestamp
+    const cacheKey = Date.now().toString();
+    const pathWithNoCache = `${file.storage_path}?noCache=${cacheKey}`;
     const { data: stream, error: downloadError, status } =
       await supabase.storage
         .from(BUCKET)
-        .download(file.storage_path, { cacheControl: 0, revalidate: 0 });
-
-    if (downloadError) {
-      console.error(`Supabase download error (${status}):`, downloadError);
-      return res.status(404).json({ message: 'File not found in storage' });
-    }
+        .download(pathWithNoCache, { cacheControl: 0, revalidate: 0 });
+     if (downloadError) {
+        console.error(`Supabase download error (${status}):`, downloadError);
+        return res.status(404).json({ message: 'File not found in storage' });
+      }
 
    // 3) Read the Base64 ciphertext string
    const arrayBuffer = await stream.arrayBuffer();
