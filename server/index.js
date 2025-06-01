@@ -680,7 +680,7 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
    // 3) Read the Base64 ciphertext string
    const arrayBuffer = await stream.arrayBuffer();
    const buffer = Buffer.from(arrayBuffer);
-   const base64 = buffer.toString('utf8');  // Base64‐encoded ciphertext
+   const base64Ciphertext = buffer.toString('utf8');  // Base64‐encoded ciphertext
 
     // █ Debug logs █
     console.log('→ [Content] file.id =', file.id);
