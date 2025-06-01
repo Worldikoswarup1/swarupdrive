@@ -670,8 +670,12 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     const file = rows[0];
 
     // 2) Download into a buffer
+    // AFTER: add cacheControl and revalidate flags
     const { data: stream, error: downloadError, status } =
-      await supabase.storage.from(BUCKET).download(file.storage_path);
+      await supabase.storage
+        .from(BUCKET)
+        .download(file.storage_path, { cacheControl: 0, revalidate: 0 });
+
     if (downloadError) {
       console.error(`Supabase download error (${status}):`, downloadError);
       return res.status(404).json({ message: 'File not found in storage' });
