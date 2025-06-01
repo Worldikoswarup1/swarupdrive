@@ -682,27 +682,38 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
    const buffer = Buffer.from(arrayBuffer);
    const base64 = buffer.toString('utf8');  // Base64‐encoded ciphertext
 
-    // Insert debug logs here:
+    // █ Debug logs █
     console.log('→ [Content] file.id =', file.id);
-    console.log('→ [Content] fetched iv   =', file.iv);
-    console.log('→ [Content] fetched auth =', file.auth_tag);
-    console.log('→ [Content] ciphertext length (Base64 chars) =', base64.length);
-    // Optionally, print the first 30 characters of the ciphertext so we see it’s valid Base64:
-    console.log('→ [Content] ciphertext sample =', base64.slice(0, 30));
+    console.log('→ [Content] iv         =', file.iv);
+    console.log('→ [Content] auth_tag   =', file.auth_tag);
+    console.log('→ [Content] “encrypted” flag =', file.encrypted);
+    console.log('→ [Content] ciphertext length (chars) =', base64Ciphertext.length);
+    console.log('→ [Content] ciphertext sample (first 30 chars) =', base64Ciphertext.slice(0, 30));
     
    // 4) Decrypt if needed, else return plaintext directly
-   const plaintext = file.encrypted && file.iv && file.auth_tag
-     ? decrypt({
-         iv: file.iv,
-         content: base64,
-         authTag: file.auth_tag
-       })
-     : base64;
+    let plaintext;
+    if (file.encrypted && file.iv && file.auth_tag) {
+      try {
+        plaintext = decrypt({
+          iv:      file.iv,           // should be Base64 nonce
+          content: base64Ciphertext,  // should be Base64 ciphertext
+          authTag: file.auth_tag      // should be Base64 auth tag
+        });
+      } catch (decryptErr) {
+        console.error('‼️ [Content] decrypt() threw:', decryptErr);
+        return res
+          .status(500)
+          .json({ message: 'Decryption failed in /content', detail: decryptErr.message });
+      }
+    } else {
+      // If not marked encrypted, just send the plaintext (or Base64 string)
+      plaintext = base64Ciphertext;
+    }
 
-   return res.json({ content: plaintext });
+    return res.json({ content: plaintext });
 
   } catch (err) {
-    console.error('Error fetching file content:', err);
+    console.error('‼️ [Content] Unexpected error:', err);
     return res.status(500).json({ message: 'Failed to get file content', detail: err.message });
   }
 });
