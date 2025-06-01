@@ -682,6 +682,14 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
    const buffer = Buffer.from(arrayBuffer);
    const base64 = buffer.toString('utf8');  // Base64‐encoded ciphertext
 
+    // Insert debug logs here:
+    console.log('→ [Content] file.id =', file.id);
+    console.log('→ [Content] fetched iv   =', file.iv);
+    console.log('→ [Content] fetched auth =', file.auth_tag);
+    console.log('→ [Content] ciphertext length (Base64 chars) =', base64.length);
+    // Optionally, print the first 30 characters of the ciphertext so we see it’s valid Base64:
+    console.log('→ [Content] ciphertext sample =', base64.slice(0, 30));
+    
    // 4) Decrypt if needed, else return plaintext directly
    const plaintext = file.encrypted && file.iv && file.auth_tag
      ? decrypt({
