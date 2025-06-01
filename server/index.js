@@ -750,20 +750,24 @@ app.put('/api/files/:id/content', authenticateToken, async (req, res) => {
     const file = accessCheck.rows[0];
   // Encrypt content (Base64 iv/content/authTag)
   const encrypted = encrypt(content);
-  console.log('→ [Edit] encrypted.iv    =', encrypted.iv);
-  console.log('→ [Edit] encrypted.authTag=', encrypted.authTag);
-  console.log('→ [Edit] encrypted.content sample =', encrypted.content.slice(0, 30));
+  // ─── Debug: log new IV/authTag/ciphertext sample ───
+  console.log('→ [PUT] new iv            =', encrypted.iv);
+  console.log('→ [PUT] new auth_tag      =', encrypted.authTag);
+  console.log('→ [PUT] new ciphertext sample =', encrypted.content.slice(0, 30));
+  // ───────────────────────────────────────────────────
+
       
   // 1) Push the new ciphertext to Supabase Storage
   const { error: uploadError } = await supabase
     .storage
     .from(BUCKET)
     .update(file.storage_path, Buffer.from(encrypted.content, 'utf8'));
+    // ─── Debug: confirm Supabase write succeeded or log its error ───
   if (uploadError) {
     console.error('Error updating storage:', uploadError);
     return res.status(500).json({ message: 'Failed to upload updated content', detail: uploadError.message });
   }
-
+  console.log('→ [PUT] Supabase update succeeded');
   // 2) Update iv/auth_tag in database
   await pool.query(
     `UPDATE files SET iv = $1, auth_tag = $2, updated_at = CURRENT_TIMESTAMP
@@ -810,11 +814,13 @@ app.get('/api/files/:id/download', authenticateToken, async (req, res) => {
      
     
       // 2) Download entire file from Supabase into a buffer
-      const { data: stream, error: downloadError, status } =
-        await supabase
-          .storage
-          .from(BUCKET)
-          .download(file.storage_path);
+  const { data: stream, error: downloadError, status } =
+    await supabase.storage
+      .from(BUCKET)
+      .download(
+        file.storage_path,
+        { cacheControl: 0, revalidate: 0 }
+      );
 
       if (downloadError) {
         console.error(`Download error (status ${status}):`, downloadError);
