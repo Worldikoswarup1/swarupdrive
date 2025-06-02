@@ -160,6 +160,7 @@ const io = new Server(server, {
 
 app.use(express.json());
 
+const JWT_EXPIRES_IN_MS = 1000 * 60 * 60 * 2; // 2 hours
 
 // Authentication middleware (RS‑256 only)
 const authenticateToken = (req, res, next) => {
