@@ -138,6 +138,14 @@ app.use(
   })
 );
 
+// 2) Explicitly handle preflight (OPTIONS) requests
+app.options('*', cors({
+  origin: checkOrigin,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type','Authorization']
+}));
+
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
