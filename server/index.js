@@ -17,6 +17,9 @@ import { parseFile } from 'music-metadata';
 import ffmpeg from 'fluent-ffmpeg';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import os from 'os'; // If needed for more detailed device info
+import { getClientIp } from 'request-ip'; // Install this package to get IP from request
+
 
 
 // Get the directory name
@@ -408,33 +411,46 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  
+  const { email, password, deviceId } = req.body; // Ensure frontend sends deviceId
+
   try {
-    // Check if user exists
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    
+
     if (result.rows.length === 0) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-    
+
     const user = result.rows[0];
-    
-    // Validate password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
+
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-    
-    // Generate JWT token
+
+    // Generate JWT ID and token
+    const jwtId = uuidv4();
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email },
+      { id: user.id, name: user.name, email: user.email, jti: jwtId },
       PRIVATE_KEY,
       { algorithm: 'RS256', expiresIn: JWT_EXPIRES_IN }
     );
-    
+
+    // Calculate expiry timestamp
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + JWT_EXPIRES_IN_MS); // define JWT_EXPIRES_IN_MS = 1000 * 60 * 60 * 24 etc.
+
+    // Get IP Address
+    const ipAddress = getClientIp(req) || req.ip || 'unknown';
+
+    // Insert into sessions table
+    await pool.query(
+      `INSERT INTO sessions (user_id, ip_address, device_id, jwt_id, expires_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [user.id, ipAddress, deviceId, jwtId, expiresAt]
+    );
+
     res.json({
       message: 'Login successful',
       token,
@@ -449,6 +465,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ message: 'Server error during login' });
   }
 });
+
 
 app.get('/api/auth/me', authenticateToken, (req, res) => {
   res.json({
