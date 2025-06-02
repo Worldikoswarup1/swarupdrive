@@ -281,7 +281,7 @@ const initDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS music_metadata (
         file_id UUID PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
-        title TEXT NOT NULL,
+        title TEXT,
         artist TEXT,
         album TEXT,
         cover TEXT,   -- base64 or URL of thumbnail image
