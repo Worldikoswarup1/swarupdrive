@@ -114,7 +114,6 @@ const ALLOWED_ORIGINS = [
   /^http:\/\/localhost:\d+$/,
   'https://swarupdrive.vercel.app',
   'https://swarupplay-play3.vercel.app',
-  'https://swarupmusic.vercel.app'
 ];
 
 function checkOrigin(origin, callback) {
