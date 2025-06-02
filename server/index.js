@@ -109,11 +109,12 @@ const upload = multer({
 const app = express();
 const server = http.createServer(app);
 
-/* Allow both localhost and your Vercel front-ends
+// Allow both localhost and your Vercel front-ends
 const ALLOWED_ORIGINS = [
   /^http:\/\/localhost:\d+$/,
   'https://swarupdrive.vercel.app',
-  'https://swarupplay-play3.vercel.app'
+  'https://swarupplay-play3.vercel.app',
+  'https://swarupmusic.vercel.app/'
 ];
 
 function checkOrigin(origin, callback) {
@@ -123,12 +124,12 @@ function checkOrigin(origin, callback) {
   }
   return callback(new Error(`Origin ${origin} not allowed by CORS`));
 }
-*/
+
 
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: checkOrigin,
     methods: ['GET','POST'],
     credentials: true,
   },
@@ -137,7 +138,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: checkOrigin,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type','Authorization'],
