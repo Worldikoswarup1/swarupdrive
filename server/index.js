@@ -114,17 +114,29 @@ const ALLOWED_ORIGINS = [
   /^http:\/\/localhost:\d+$/,
   'https://swarupdrive.vercel.app',
   'https://swarupplay-play3.vercel.app',
-  'https://swarupmusic.vercel.app/'
+  'https://swarupmusic.vercel.app'
 ];
 
 function checkOrigin(origin, callback) {
   if (!origin) return callback(null, true);
-  if (ALLOWED_ORIGINS.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+  if (
+    ALLOWED_ORIGINS.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    )
+  ) {
     return callback(null, true);
   }
   return callback(new Error(`Origin ${origin} not allowed by CORS`));
 }
 
+app.use(
+  cors({
+    origin: checkOrigin,
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type','Authorization']
+  })
+);
 
 // Initialize Socket.io
 const io = new Server(server, {
@@ -135,14 +147,6 @@ const io = new Server(server, {
   },
 });
 
-
-// Middleware
-app.use(cors({
-  origin: checkOrigin,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type','Authorization'],
-}));
 
 app.use(express.json());
 
