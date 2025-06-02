@@ -179,7 +179,7 @@ const FileList: React.FC = () => {
                       <IconButton
                         edge="end"
                         onClick={() => window.open(
-                          `https://swarupmusic.vercel.app/?play=${file.id}`, 
+                          `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}`, 
                           '_blank'
                         )}
                         title="Play audio"
