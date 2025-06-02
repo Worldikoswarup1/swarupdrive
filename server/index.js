@@ -483,166 +483,208 @@ app.get('/api/files', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/files/upload', authenticateToken, upload.single('file'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-  
-  try {
+app.post(
+  '/api/files/upload',
+  authenticateToken,
+  upload.single('file'),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Destructure the uploaded file info:
     const { originalname, mimetype, size, path: filePath } = req.file;
-    
-    // For text files, encrypt the content
-    let iv = null;
+
+    // We'll collect audio metadata (if any) here before deleting the file:
+    let audioCommon = null;   // Will hold ID3 tags (title, artist, album)
+    let audioCover  = null;   // Base64 cover, if present
+
+    // If it's a text file (e.g. plain .txt), encrypt its contents IN PLACE first:
+    let iv      = null;
     let authTag = null;
-    
-    if (mimetype === 'text/plain') {
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      const encrypted = encrypt(fileContent);
-      
-      // Save the encrypted *hex string* back to the file (utf8)
-      fs.writeFileSync(filePath, encrypted.content, 'utf8');
-      
-      iv = encrypted.iv;
-      authTag = encrypted.authTag;
-    }
-    
-    // 1) Upload the raw (or encrypted) file to Supabase Storage
-    const key = `${uuidv4()}${path.extname(originalname)}`;
-    const fileBuffer = fs.readFileSync(filePath);
-    const { error: uploadError } = await supabase
-      .storage
-      .from(BUCKET)
-      .upload(key, fileBuffer, { contentType: mimetype });
-    if (uploadError) throw uploadError;
-    // remove temp file
-    fs.unlinkSync(filePath);
-  
-    // 2) Insert file metadata into your DB, storing `key` as the storage_path
-    const result = await pool.query(
-      `INSERT INTO files
-         (name, type, size, storage_path, iv, auth_tag, owner_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
-       RETURNING id, name, type, size, created_at, updated_at, owner_id`,
-      [originalname, mimetype, size, key, iv, authTag, req.user.id]
-    );
-    
-    // Insert into user_files for owner with write permission
-    await pool.query(
-      `INSERT INTO user_files (user_id, file_id, permission)
-       VALUES ($1, $2, 'write')`,
-      [req.user.id, result.rows[0].id]
-    );
-    
-    // 3) If this is an audio file, extract and save metadata
-    if (mimetype.startsWith('audio/')) {
-      // Read and (if encrypted) decrypt into a buffer
-      let buffer = fs.readFileSync(filePath);
-      if (iv && authTag) {
-        // decrypt returns UTF-8 string, convert back to Buffer
-        const decryptedStr = decrypt({ iv, content: buffer.toString('hex'), authTag });
-        buffer = Buffer.from(decryptedStr, 'utf8');
+
+    try {
+      if (mimetype === 'text/plain') {
+        // 1) Read plaintext from disk:
+        const plaintext = fs.readFileSync(filePath, 'utf8');
+
+        // 2) Encrypt to AES-256-GCM (Base64 output):
+        const encrypted = encrypt(plaintext);
+        iv      = encrypted.iv;
+        authTag = encrypted.authTag;
+
+        // 3) Overwrite the disk file with Base64 ciphertext:
+        fs.writeFileSync(filePath, encrypted.content, 'utf8');
       }
-      
-      // Parse ID3 tags
-      const metadata = await parseBuffer(buffer, mimetype);
-      const common = metadata.common;
-      
-      // Build cover data URI if present
-      let cover = null;
-      if (common.picture && common.picture.length) {
-        const pic = common.picture[0];
-        cover = `data:${pic.format};base64,${Buffer.from(pic.data).toString('base64')}`;
-      }
-      
-      // Insert into music_metadata
 
-      let fileId = result.rows[0].id; // or wherever the value should come from
+      // If it's an audio file, extract ID3 metadata BEFORE deleting the file:
+      if (mimetype.startsWith('audio/')) {
+        // 1) Read the (possibly encrypted) buffer from disk:
+        const bufferOnDisk = fs.readFileSync(filePath);
 
-      await pool.query(
-        `INSERT INTO music_metadata (file_id,title,artist,album,cover,lyrics)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
-        [
-          fileId,
-          common.title   || null,
-          common.artist  || null,
-          common.album   || null,
-          cover          || null,
-          null           // or supply lyrics if you have them
-        ]
-      );
-    }
+        let parseBufferSource = bufferOnDisk;
 
-    if (mimetype.startsWith('video/')) {
-     ffmpeg.ffprobe(filePath, async (err, metadata) => {
-        if (err) {
-          console.error('Error probing video metadata:', err);
-        } else {
-          try {
-            const format = metadata.format;
-            const streams = metadata.streams || [];
-            const videoStream = streams.find(s => s.codec_type === 'video');
-
-            const duration = Math.floor(format.duration || 0);  // now 7                      // in seconds
-            const resolution = videoStream
-              ? `${videoStream.width}x${videoStream.height}`
-              : null;
-
-            // Optionally: generate a thumbnail
-            let thumbnailUrl = null;
-            const thumbFile = `${filename}_thumb.jpg`;
-            await new Promise((resolve, reject) => {
-              ffmpeg(filePath)
-                .screenshots({
-                  timestamps: [ '00:00:01.000' ],    // at 1 second
-                  filename: thumbFile,
-                  folder: STORAGE_DIR,
-                  size: '320x240',
-                })
-                .on('end', resolve)
-                .on('error', reject);
-            });
-            thumbnailUrl = `/storage/${thumbFile}`;
-
-            // Insert into video_metadata
-            await pool.query(
-              `INSERT INTO video_metadata 
-                 (file_id, title, duration, resolution, thumbnail, codec) 
-               VALUES ($1, $2, $3, $4, $5, $6)`,
-              [
-                result.rows[0].id,
-                originalname || result.rows[0].name,       // supply a non-null title
-                duration,
-                resolution,
-                thumbnailUrl,
-                videoStream?.codec_name || null
-              ]
-            );
-
-          } catch (dbErr) {
-            console.error('Error inserting video_metadata:', dbErr);
-          }
+        // 2) If we encrypted it above, decrypt to get plaintext for parseBuffer:
+        if (iv && authTag) {
+          // decrypt() expects { iv, content, authTag }, where content is Base64 ciphertext
+          // Our `bufferOnDisk` holds Base64 ciphertext as UTF-8 string:
+          const base64Cipher = bufferOnDisk.toString('utf8');
+          const decryptedText = decrypt({
+            iv:      iv,
+            content: base64Cipher,
+            authTag: authTag,
+          });
+          parseBufferSource = Buffer.from(decryptedText, 'utf8');
         }
+
+        // 3) Parse ID3 tags:
+        const metadata = await parseBuffer(parseBufferSource, mimetype);
+        const common   = metadata.common;
+        audioCommon = {
+          title:  common.title  || null,
+          artist: common.artist || null,
+          album:  common.album  || null,
+        };
+
+        // 4) If cover art exists, build a data URI:
+        if (common.picture && common.picture.length) {
+          const pic       = common.picture[0];
+          const base64Img = Buffer.from(pic.data).toString('base64');
+          audioCover = `data:${pic.format};base64,${base64Img}`;
+        }
+      }
+
+      // If it’s a video file, we’ll handle ffmpeg metadata *after* uploading and DB insert,
+      // because ffprobe might take a moment (and can run async). We'll capture metadata in a callback.
+      const isVideo = mimetype.startsWith('video/');
+
+      // 5) Read the (possibly encrypted) file buffer for Supabase upload:
+      const fileBuffer = fs.readFileSync(filePath);
+
+      // 6) Upload to Supabase Storage:
+      const key = `${uuidv4()}${path.extname(originalname)}`;
+      const { error: uploadError } = await supabase
+        .storage
+        .from(BUCKET)
+        .upload(key, fileBuffer, { contentType: mimetype });
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // 7) Insert record into `files` table (with iv/authTag if text):
+      const insertFileResult = await pool.query(
+        `INSERT INTO files
+           (name, type, size, storage_path, iv, auth_tag, owner_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         RETURNING id, name, type, size, created_at, updated_at, owner_id`,
+        [originalname, mimetype, size, key, iv, authTag, req.user.id]
+      );
+      const newFile = insertFileResult.rows[0];
+      const newFileId = newFile.id;
+
+      // 8) Grant write permission to owner in user_files:
+      await pool.query(
+        `INSERT INTO user_files (user_id, file_id, permission)
+         VALUES ($1, $2, 'write')`,
+        [req.user.id, newFileId]
+      );
+
+      // 9) If this was an audio file, insert into music_metadata using what we parsed earlier:
+      if (audioCommon) {
+        await pool.query(
+          `INSERT INTO music_metadata (file_id, title, artist, album, cover, lyrics)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            newFileId,
+            audioCommon.title,
+            audioCommon.artist,
+            audioCommon.album,
+            audioCover,
+            null, // lyrics (none)
+          ]
+        );
+      }
+
+      // 10) If it’s a video file, run ffprobe now that we have newFileId and disk path:
+      if (isVideo) {
+        ffmpeg.ffprobe(filePath, async (err, metadata) => {
+          if (err) {
+            console.error('Error probing video metadata:', err);
+          } else {
+            try {
+              const format       = metadata.format;
+              const streams      = metadata.streams || [];
+              const videoStream  = streams.find(s => s.codec_type === 'video');
+              const durationSecs = Math.floor(format.duration || 0);
+              const resolution   = videoStream
+                ? `${videoStream.width}x${videoStream.height}`
+                : null;
+
+              // Optionally: generate a thumbnail (this example writes to local STORAGE_DIR)
+              let thumbnailUrl = null;
+              const thumbFileName = `${newFileId}_thumb.jpg`;
+              await new Promise((resolve, reject) => {
+                ffmpeg(filePath)
+                  .screenshots({
+                    timestamps: ['00:00:01.000'], // at 1 second
+                    filename: thumbFileName,
+                    folder: STORAGE_DIR,
+                    size: '320x240',
+                  })
+                  .on('end', () => resolve())
+                  .on('error', (e) => reject(e));
+              });
+              thumbnailUrl = `/storage/${thumbFileName}`;
+
+              // Insert into video_metadata table:
+              await pool.query(
+                `INSERT INTO video_metadata
+                   (file_id, title, duration, resolution, thumbnail, codec)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                  newFileId,
+                  originalname || newFile.name,
+                  durationSecs,
+                  resolution,
+                  thumbnailUrl,
+                  videoStream?.codec_name || null,
+                ]
+              );
+            } catch (dbErr) {
+              console.error('Error inserting video_metadata:', dbErr);
+            }
+          }
+        });
+      }
+
+      // 11) NOW that we've finished uploading and inserting all metadata, remove the temp file:
+      fs.unlinkSync(filePath);
+
+      // 12) Finally, respond with success:
+      return res.status(201).json({
+        message: 'File uploaded successfully',
+        file: {
+          ...newFile,
+          is_shared: false,
+        },
       });
-    }
+    } catch (err) {
+      // If anything went wrong at any point, log & clean up:
+      console.error('Error uploading file:', err);
 
+      // If the temp file still exists on disk, try to delete it:
+      if (req.file && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkErr) {
+          console.error('Error cleaning up temp file:', unlinkErr);
+        }
+      }
 
-    res.status(201).json({
-      message: 'File uploaded successfully',
-      file: {
-        ...result.rows[0],
-        is_shared: false,
-      },
-    });
-  } catch (err) {
-    console.error('Error uploading file:', err);
-    // Clean up the uploaded file if there was an error
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
+      return res.status(500).json({ message: 'Failed to upload file' });
     }
-    res.status(500).json({ message: 'Failed to upload file' });
   }
-});
-
+);
 
 
 
