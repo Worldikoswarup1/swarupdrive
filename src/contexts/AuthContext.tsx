@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
+import { getOrCreateDeviceId } from '../utils/device'; // ⬅️ you’ll create this
 
 interface User {
   id: string;
@@ -76,7 +77,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+      const deviceId = getOrCreateDeviceId(); // 🔐 generate or get stored device ID
+      const response = await axios.post(`${API_URL}/api/auth/login`, { email, password, deviceId });
       const { token: newToken, user: userData } = response.data;
       localStorage.setItem('token', newToken);
       setToken(newToken);
