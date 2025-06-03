@@ -40,7 +40,7 @@ import { useFiles, FileItem } from '../contexts/FileContext';
 import ShareFileDialog from './ShareFileDialog';
 import { Tooltip } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-
+import { getOrCreateDeviceId } from '../utils/device';
 
 const FileList: React.FC = () => {
   const { files, loading, deleteFile, downloadFile } = useFiles();
@@ -179,7 +179,7 @@ const FileList: React.FC = () => {
                       <IconButton
                         edge="end"
                         onClick={() => window.open(
-                          `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}`, 
+                          `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}&deviceId=${deviceId}`,
                           '_blank'
                         )}
                         title="Play audio"
