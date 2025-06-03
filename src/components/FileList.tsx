@@ -176,16 +176,19 @@ const FileList: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     {/* Audio: open in SwarupMusic (port 9001) */}
                     {file.type.startsWith('audio/') && (
-                      <IconButton
-                        edge="end"
-                        onClick={() => window.open(
-                          `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}&deviceId=${deviceId}`,
-                          '_blank'
-                        )}
-                        title="Play audio"
-                      >
-                        <PlayIcon />
-                      </IconButton>
+                  <IconButton
+                    edge="end"
+                    onClick={() => {
+                      const deviceId = getOrCreateDeviceId(); // fetch or generate current device ID
+                      window.open(
+                        `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}&deviceId=${deviceId}`,
+                        '_blank'
+                      );
+                    }}
+                    title="Play audio"
+                  >  
+                    <PlayIcon />
+                  </IconButton>
                     )}
 
                     {/* Video: redirect to SwarupVideo (port 8001) with a video icon */}
