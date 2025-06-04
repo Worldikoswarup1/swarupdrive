@@ -475,22 +475,27 @@ app.post('/api/auth/login', async (req, res) => {
  */
 app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   try {
-    // 1) The authenticateToken middleware already verified the JWT 
-    //    and attached its payload to req.user. We expect req.user.jti to exist.
-    const jwtId = req.user.jti;
+    // Log entry into logout to confirm route is hit:
+    console.log('→ [/api/auth/logout] handler invoked');
+
+    // 1) Verify that authenticateToken actually populated req.user
+    console.log('→ [/api/auth/logout] decoded JWT payload:', req.user);
+    const jwtId = req.user?.jti;
     if (!jwtId) {
-      return res.status(400).json({ message: 'Invalid token: no jti' });
+      console.warn('→ [/api/auth/logout] no jti found on req.user');
+      return res.status(400).json({ message: 'Invalid token: missing jti' });
     }
 
-    // 2) Update the sessions table so that this jwt_id is marked revoked
-    await pool.query(
+    // 2) Flip revoked = true for exactly this session row
+    const updateResult = await pool.query(
       `UPDATE sessions
          SET revoked = true
        WHERE jwt_id = $1`,
       [jwtId]
     );
+    console.log(`→ [/api/auth/logout] sessions rows updated:`, updateResult.rowCount);
 
-    // 3) Return a simple success response
+    // 3) Return success
     return res.json({ message: 'Logout successful' });
   } catch (err) {
     console.error('Logout error:', err);
