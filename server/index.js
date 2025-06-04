@@ -475,18 +475,30 @@ app.post('/api/auth/login', async (req, res) => {
  */
 app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   try {
-    // Log entry into logout to confirm route is hit:
     console.log('→ [/api/auth/logout] handler invoked');
 
-    // 1) Verify that authenticateToken actually populated req.user
-    console.log('→ [/api/auth/logout] decoded JWT payload:', req.user);
+    // 1) Ensure authenticateToken populated req.user:
+    console.log('→ [/api/auth/logout] req.user payload:', req.user);
     const jwtId = req.user?.jti;
     if (!jwtId) {
       console.warn('→ [/api/auth/logout] no jti found on req.user');
       return res.status(400).json({ message: 'Invalid token: missing jti' });
     }
 
-    // 2) Flip revoked = true for exactly this session row
+    // 2) Before flipping anything, check whether that jwt_id even exists in sessions:
+    const { rows: existingRows } = await pool.query(
+      `SELECT id, jwt_id, revoked, created_at 
+         FROM sessions 
+        WHERE jwt_id = $1`,
+      [jwtId]
+    );
+    console.log('→ [/api/auth/logout] lookup sessions by jwt_id:', existingRows);
+    if (existingRows.length === 0) {
+      console.warn(`→ [/api/auth/logout] no session row found for jwt_id = ${jwtId}`);
+      return res.status(404).json({ message: 'Session not found (already revoked or invalid)' });
+    }
+
+    // 3) Flip revoked = true on that exact row:
     const updateResult = await pool.query(
       `UPDATE sessions
          SET revoked = true
@@ -495,7 +507,7 @@ app.post('/api/auth/logout', authenticateToken, async (req, res) => {
     );
     console.log(`→ [/api/auth/logout] sessions rows updated:`, updateResult.rowCount);
 
-    // 3) Return success
+    // 4) Success
     return res.json({ message: 'Logout successful' });
   } catch (err) {
     console.error('Logout error:', err);
