@@ -108,11 +108,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    _setUser(null);
-  };
+    const logout = async () => {
+      try {
+        if (token) {
+          await axios.post(
+            `${API_URL}/api/auth/logout`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      } catch (err) {
+        console.error('Error during logout:', err);
+      } finally {
+        localStorage.removeItem('token');
+        setToken(null);
+        _setUser(null);
+      }
+    };
 
   const clearError = () => {
     setError(null);
