@@ -44,7 +44,7 @@ import { getOrCreateDeviceId } from '../utils/device';
 
 const FileList: React.FC = () => {
   const { files, loading, deleteFile, downloadFile } = useFiles();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -178,39 +178,42 @@ const FileList: React.FC = () => {
                     {file.type.startsWith('audio/') && (
                       <IconButton
                         edge="end"
-                        onClick={async () => {
-                          try {
-                            // 1) Ask SwarupDrive for a 10s‐valid play link:
-                             // ─── Retrieve your JWT however you’ve stored it ───
-                               const authToken = localStorage.getItem('authToken');
-                               if (!authToken) {
-                                 console.error('No auth token found');
-                                 return;
-                               }
-                               const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
-                                 method: 'POST',
-                                 headers: {
-                                   'Content-Type': 'application/json',
-                                   'Authorization': `Bearer ${authToken}`,
-                                 },
-                                 // If your backend also checks for cookies, you can keep this:
-                                 credentials: 'include',
-                                 body: JSON.stringify({ fileId: file.id }),
-                               });
-                            if (!resp.ok) {
-                              console.error('Failed to get play link:', await resp.text());
-                              return;
-                            }
-                            const { playUrl } = await resp.json();
-                    
-                            // 2) Open that short-living URL in a new tab.
-                            //    SwarupDrive’s response “playUrl” already points to:
-                            //      https://swarupmusic.vercel.app/short-play?token=<valid-10s-JWT>
-                            window.open(playUrl, '_blank');
-                          } catch (err) {
-                            console.error('Error generating play link:', err);
-                          }
-                        }}
+                         onClick={async () => {
+                           try {
+                             // 1) Attempt to read the JWT from context or localStorage:
+                             //    (if you store it under 'authToken' in localStorage)
+                             let authToken = localStorage.getItem('authToken');
+                             //    If useAuth() ever provides a token, you could do:
+                             //    const { token: ctxToken } = useAuth();
+                             //    authToken = ctxToken || authToken;
+                      
+                             if (!authToken) {
+                               console.error('No auth token found');
+                               return;
+                             }
+                      
+                             // 2) Call Drive’s POST /api/play-link with Authorization header
+                             const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
+                               method: 'POST',
+                               headers: {
+                                 'Content-Type': 'application/json',
+                                 'Authorization': `Bearer ${authToken}`,
+                               },
+                               // If Drive also checks cookies, keep this; otherwise it can be omitted:
+                               credentials: 'include',
+                               body: JSON.stringify({ fileId: file.id }),
+                             });
+                      
+                             if (!resp.ok) {
+                               console.error('Failed to get play link:', await resp.text());
+                               return;
+                             }
+                             const { playUrl } = await resp.json();
+                             window.open(playUrl, '_blank');
+                           } catch (err) {
+                             console.error('Error generating play link:', err);
+                           }
+                         }}
                         title="Play audio"
                       >
                         <PlayIcon />
