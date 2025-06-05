@@ -176,19 +176,38 @@ const FileList: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     {/* Audio: open in SwarupMusic (port 9001) */}
                     {file.type.startsWith('audio/') && (
-                  <IconButton
-                    edge="end"
-                    onClick={() => {
-                      const deviceId = getOrCreateDeviceId(); // fetch or generate current device ID
-                      window.open(
-                        `https://swarupmusic.vercel.app/?play=${file.id}&user=${user?.id}&deviceId=${deviceId}`,
-                        '_blank'
-                      );
-                    }}
-                    title="Play audio"
-                  >  
-                    <PlayIcon />
-                  </IconButton>
+                      <IconButton
+                        edge="end"
+                        onClick={async () => {
+                          try {
+                            // 1) Ask SwarupDrive for a 10s‐valid play link:
+                            const resp = await fetch('/api/play-link', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                // If your drive-backend requires an auth‐cookie or token header,
+                                // make sure the browser sends it automatically (e.g. same‐origin cookies).
+                              },
+                              body: JSON.stringify({ fileId: file.id }),
+                            });
+                            if (!resp.ok) {
+                              console.error('Failed to get play link:', await resp.text());
+                              return;
+                            }
+                            const { playUrl } = await resp.json();
+                    
+                            // 2) Open that short-living URL in a new tab.
+                            //    SwarupDrive’s response “playUrl” already points to:
+                            //      https://swarupmusic.vercel.app/short-play?token=<valid-10s-JWT>
+                            window.open(playUrl, '_blank');
+                          } catch (err) {
+                            console.error('Error generating play link:', err);
+                          }
+                        }}
+                        title="Play audio"
+                      >
+                        <PlayIcon />
+                      </IconButton>
                     )}
 
                     {/* Video: redirect to SwarupVideo (port 8001) with a video icon */}
