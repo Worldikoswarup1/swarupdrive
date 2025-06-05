@@ -44,7 +44,7 @@ import { getOrCreateDeviceId } from '../utils/device';
 
 const FileList: React.FC = () => {
   const { files, loading, deleteFile, downloadFile } = useFiles();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
