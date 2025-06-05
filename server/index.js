@@ -1215,7 +1215,7 @@ app.post('/api/play-link', async (req, res) => {
     const token = crypto.randomBytes(64).toString('hex');
 
     // 2) Compute expires_at = now + 10 seconds
-    const expiresAt = new Date(Date.now() + 10 * 1000); // 10s in the future
+    const expiresAt = new Date(Date.now() + 60 * 1000); // 10s in the future
 
     // 3) Insert into play_links
     await pool.query(
