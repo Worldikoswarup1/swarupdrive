@@ -181,7 +181,7 @@ const FileList: React.FC = () => {
                         onClick={async () => {
                           try {
                             // 1) Ask SwarupDrive for a 10s‐valid play link:
-                            const resp = await fetch('/api/play-link', {
+                            const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
                               method: 'POST',
                               headers: {
                                 'Content-Type': 'application/json',
