@@ -184,11 +184,13 @@ const FileList: React.FC = () => {
                             const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
                               method: 'POST',
                               headers: {
-                                'Content-Type': 'application/json',
-                                // If your drive-backend requires an auth‐cookie or token header,
-                                // make sure the browser sends it automatically (e.g. same‐origin cookies).
-                              },
-                              body: JSON.stringify({ fileId: file.id }),
+                                 'Content-Type': 'application/json',
+                                 // If you use JWT in localStorage, add:
+                                 // 'Authorization': `Bearer ${yourStoredToken}`,
+                               },
+                               // If your Drive login is cookie-based, include the cookie:
+                               credentials: 'include',
+                               body: JSON.stringify({ fileId: file.id }),
                             });
                             if (!resp.ok) {
                               console.error('Failed to get play link:', await resp.text());
