@@ -1212,7 +1212,7 @@ app.post('/api/play-link', async (req, res) => {
     }
 
     // 1) Generate a new random token (hex, 32 bytes → 64‐char string)
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(64).toString('hex');
 
     // 2) Compute expires_at = now + 10 seconds
     const expiresAt = new Date(Date.now() + 10 * 1000); // 10s in the future
@@ -1226,7 +1226,7 @@ app.post('/api/play-link', async (req, res) => {
 
     // 4) Build the short‐lived URL that SwarupMusic will consume
     //    (replace <SWARUPMUSIC_DOMAIN> with your actual domain)
-    const playUrl = `https://swarupmusic.vercel.app/?play=${fileId}&playToken=${token}`;
+    const playUrl = `https://swarupmusic.vercel.app/?playToken=${token}`;
 
     return res.status(200).json({ playUrl });
   } catch (err) {
