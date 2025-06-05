@@ -181,17 +181,22 @@ const FileList: React.FC = () => {
                         onClick={async () => {
                           try {
                             // 1) Ask SwarupDrive for a 10s‐valid play link:
-                            const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
-                              method: 'POST',
-                              headers: {
-                                 'Content-Type': 'application/json',
-                                 // If you use JWT in localStorage, add:
-                                 // 'Authorization': `Bearer ${yourStoredToken}`,
-                               },
-                               // If your Drive login is cookie-based, include the cookie:
-                               credentials: 'include',
-                               body: JSON.stringify({ fileId: file.id }),
-                            });
+                             // ─── Retrieve your JWT however you’ve stored it ───
+                               const authToken = localStorage.getItem('authToken');
+                               if (!authToken) {
+                                 console.error('No auth token found');
+                                 return;
+                               }
+                               const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
+                                 method: 'POST',
+                                 headers: {
+                                   'Content-Type': 'application/json',
+                                   'Authorization': `Bearer ${authToken}`,
+                                 },
+                                 // If your backend also checks for cookies, you can keep this:
+                                 credentials: 'include',
+                                 body: JSON.stringify({ fileId: file.id }),
+                               });
                             if (!resp.ok) {
                               console.error('Failed to get play link:', await resp.text());
                               return;
