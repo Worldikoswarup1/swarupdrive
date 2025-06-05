@@ -178,42 +178,28 @@ const FileList: React.FC = () => {
                     {file.type.startsWith('audio/') && (
                       <IconButton
                         edge="end"
-                         onClick={async () => {
-                           try {
-                             // 1) Attempt to read the JWT from context or localStorage:
-                             //    (if you store it under 'authToken' in localStorage)
-                             let authToken = localStorage.getItem('authToken');
-                             //    If useAuth() ever provides a token, you could do:
-                             //    const { token: ctxToken } = useAuth();
-                             //    authToken = ctxToken || authToken;
-                      
-                             if (!authToken) {
-                               console.error('No auth token found');
-                               return;
-                             }
-                      
-                             // 2) Call Drive’s POST /api/play-link with Authorization header
-                             const resp = await fetch('https://swarupdrive.onrender.com/api/play-link', {
-                               method: 'POST',
-                               headers: {
-                                 'Content-Type': 'application/json',
-                                 'Authorization': `Bearer ${authToken}`,
-                               },
-                               // If Drive also checks cookies, keep this; otherwise it can be omitted:
-                               credentials: 'include',
-                               body: JSON.stringify({ fileId: file.id }),
-                             });
-                      
-                             if (!resp.ok) {
-                               console.error('Failed to get play link:', await resp.text());
-                               return;
-                             }
-                             const { playUrl } = await resp.json();
-                             window.open(playUrl, '_blank');
-                           } catch (err) {
-                             console.error('Error generating play link:', err);
-                           }
-                         }}
+                        onClick={async () => {
+                          try {
+                            // 1) Call Drive backend’s new /api/play-link
+                            const resp = await fetch(
+                              'https://swarupdrive.onrender.com/api/play-link',
+                              {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ fileId: file.id }),
+                              }
+                            );
+                            if (!resp.ok) {
+                              console.error('Failed to get play link:', await resp.text());
+                              return;
+                            }
+                            const { playUrl } = await resp.json();
+                            // 2) Immediately open the short‐lived playUrl
+                            window.open(playUrl, '_blank');
+                          } catch (err) {
+                            console.error('Error generating play link:', err);
+                          }
+                        }}
                         title="Play audio"
                       >
                         <PlayIcon />
