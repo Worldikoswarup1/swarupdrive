@@ -339,6 +339,17 @@ const initDatabase = async () => {
       );
     `);
 
+    // New: short‐lived play links table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS play_links (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Video metadata table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS video_metadata (
@@ -1190,54 +1201,41 @@ app.post('/api/music/metadata', authenticateToken, async (req, res) => {
   });
 
 
-// 1) POST /api/play-link (generate 10-second JWT for fileId)
-app.post('/api/play-link', authenticateToken, async (req, res) => {
-  try {
-    // 1) You already ran `authenticateToken` middleware, so req.user contains { id, email, etc. }
-    const userId = req.user.id;
 
-    // 2) Read fileId from request body
+
+// ─── New: POST /api/play-link ───
+app.post('/api/play-link', async (req, res) => {
+  try {
     const { fileId } = req.body;
     if (!fileId) {
-      return res.status(400).json({ error: 'fileId is required' });
+      return res.status(400).json({ message: 'fileId is required' });
     }
 
-    // 3) Verify this user either owns the file or was shared it
-    const accessCheckQuery = `
-      SELECT 1
-        FROM files
-       WHERE id = $1 AND owner_id = $2
-      UNION
-      SELECT 1
-        FROM user_files
-       WHERE file_id = $1 AND user_id = $2
-      LIMIT 1
-    `;
-    const accessRes = await pool.query(accessCheckQuery, [fileId, userId]);
-    if (accessRes.rows.length === 0) {
-      return res.status(403).json({ error: "You don't have access to this file" });
-    }
+    // 1) Generate a new random token (hex, 32 bytes → 64‐char string)
+    const token = crypto.randomBytes(32).toString('hex');
 
-    // 4) Sign a short JWT (expires in 10 seconds).  
-    //    Use SWARUPDRIVE_PRIVATE_KEY (or any shared secret) for RS256/HS256,
-    //    and SwarupMusic must hold the matching PUBLIC_KEY.
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    const payload = {
-      fileId,
-      iat: nowSeconds,
-      exp: nowSeconds + 10, 
-    };
-    // You must set SWARUPDRIVE_PRIVATE_KEY in your .env
-    const token = jwt.sign(payload, process.env.SWARUPDRIVE_PRIVATE_KEY, { algorithm: 'RS256' });
+    // 2) Compute expires_at = now + 10 seconds
+    const expiresAt = new Date(Date.now() + 10 * 1000); // 10s in the future
 
-    // 5) Return a playUrl that points at SwarupMusic’s /short-play
-    const playUrl = `https://swarupmusic.vercel.app/short-play?token=${token}`;
-    return res.json({ playUrl });
+    // 3) Insert into play_links
+    await pool.query(
+      `INSERT INTO play_links (file_id, token, expires_at)
+       VALUES ($1, $2, $3)`,
+      [fileId, token, expiresAt]
+    );
+
+    // 4) Build the short‐lived URL that SwarupMusic will consume
+    //    (replace <SWARUPMUSIC_DOMAIN> with your actual domain)
+    const playUrl = `https://swarupmusic.vercel.app/?play=${fileId}&playToken=${token}`;
+
+    return res.status(200).json({ playUrl });
   } catch (err) {
-    console.error('Error in /api/play-link:', err);
-    return res.status(500).json({ error: 'Server error generating play link' });
+    console.error('❌ /api/play-link error:', err);
+    return res.status(500).json({ message: 'Server error generating play link' });
   }
 });
+
+
 
 
 // Socket.io handling
