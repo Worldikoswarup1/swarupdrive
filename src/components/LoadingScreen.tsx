@@ -15,7 +15,7 @@ const LoadingScreen: React.FC = () => {
     >
       <CircularProgress size={60} thickness={4} />
       <Typography variant="h6" sx={{ mt: 2, fontWeight: 500 }}>
-        Loading...
+        We are experiencing heavy traffic. Redirection may take up to 60 seconds...
       </Typography>
     </Box>
   );
