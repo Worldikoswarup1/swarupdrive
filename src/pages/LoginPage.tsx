@@ -179,7 +179,7 @@ import { checkSession } from '../utils/sessionUtils';
             </Button>
             <Grid container justifyContent="flex-end">
               <Grid item>
-                <Link component={RouterLink} to="/register" variant="body2">
+                <Link component={RouterLink} to="https://workspace-new.vercel.app/signup" variant="body2">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
