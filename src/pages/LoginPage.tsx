@@ -103,9 +103,9 @@ import { checkSession } from '../utils/sessionUtils';
     }
   };
 
-  return (
-  <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-    {/* Left promotional panel – always visible */}
+return (
+  <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f2f5' }}>
+    {/* Left promotional panel */}
     <Box
       sx={{
         flex: 1,
@@ -144,40 +144,39 @@ import { checkSession } from '../utils/sessionUtils';
       </Box>
     </Box>
 
-    {/* Right login panel – full white background, no inner box */}
+    {/* Right login panel */}
     <Box
       component="section"
       sx={{
-        width: '100%',
-        maxWidth: 360,
-        ml: 'auto',
-        mr: 4,
-        bgcolor: '#ffffff',
+        flex: 1,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 4,
+        justifyContent: 'flex-end',
+        bgcolor: '#ffffff',
       }}
     >
-      <Box
+      <Paper
         component="form"
         onSubmit={handleSubmit}
         noValidate
+        elevation={0}
         sx={{
           width: '100%',
           maxWidth: 360,
+          px: 4,
+          py: 6,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Avatar sx={{ m: '0 auto 16px', bgcolor: 'primary.main', width: 56, height: 56 }}>
           <LockIcon fontSize="large" />
         </Avatar>
 
-        <Typography
-          component="h1"
-          variant="h5"
-          sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}
-        >
-          Welcome Back!
+        <Typography component="h1" variant="h5" sx={{ textAlign: 'center', mb: 1, fontWeight: 600 }}>
+          Sign In to SwarupDrive
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mb: 3 }}>
+          See what’s going on with your business
         </Typography>
 
         {error && (
@@ -191,7 +190,7 @@ import { checkSession } from '../utils/sessionUtils';
           required
           fullWidth
           id="email"
-          label="Email Address"
+          label="Email"
           name="email"
           autoComplete="email"
           autoFocus
@@ -199,6 +198,7 @@ import { checkSession } from '../utils/sessionUtils';
           onChange={(e) => setEmail(e.target.value)}
           error={!!formErrors.email}
           helperText={formErrors.email}
+          variant="standard"
         />
 
         <TextField
@@ -214,32 +214,59 @@ import { checkSession } from '../utils/sessionUtils';
           onChange={(e) => setPassword(e.target.value)}
           error={!!formErrors.password}
           helperText={formErrors.password}
+          variant="standard"
         />
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: 1,
+          }}
+        >
+          <Box component="label" sx={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem' }}>
+            <input type="checkbox" style={{ marginRight: 4 }} />
+            Remember Me
+          </Box>
+          <Link component={RouterLink} to="#" variant="body2">
+            Forgot Password?
+          </Link>
+        </Box>
 
         <Button
           type="submit"
           fullWidth
           variant="contained"
           disabled={loading}
-          sx={{ mt: 3, mb: 2, py: 1.5 }}
+          sx={{
+            mt: 4,
+            mb: 2,
+            py: 1.25,
+            borderRadius: 1,
+            backgroundColor: '#7b2cbf',
+            '&:hover': { backgroundColor: '#9d4edd' },
+          }}
         >
-          {loading ? <CircularProgress size={24} /> : 'Sign In'}
+          {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Login'}
         </Button>
 
-        <Grid container justifyContent="flex-end">
+        <Grid container justifyContent="center">
           <Grid item>
             <Link
               component={RouterLink}
               to="https://workspace-new.vercel.app/signup"
               variant="body2"
+              sx={{ mt: 1 }}
             >
-              {"Don't have an account? Sign Up"}
+              Not Registered Yet? Create an account
             </Link>
           </Grid>
         </Grid>
-      </Box>
+      </Paper>
     </Box>
   </Box>
 );
+
 };
 export default LoginPage;
