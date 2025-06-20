@@ -177,7 +177,7 @@ import { checkSession } from '../utils/sessionUtils';
           variant="h5"
           sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}
         >
-          Sign In to SwarupDrive
+          Welcome Back!
         </Typography>
 
         {error && (
