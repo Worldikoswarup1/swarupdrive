@@ -198,6 +198,7 @@ return (
           label="Email"
           name="email"
           autoComplete="email"
+          placeholder="Email"
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
