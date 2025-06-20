@@ -173,6 +173,16 @@ return (
         noValidate
         sx={{ width: '100%' }}
       >
+        {/* Logo above the Sign In heading */}
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <img
+            src="/assets/icon.png"
+            alt="SwarupDrive Logo"
+            width={48}
+            height={48}
+            style={{ display: 'inline-block' }}
+          />
+        </Box>
         <Typography
           component="h1"
           variant="h4"
@@ -198,7 +208,6 @@ return (
           label="Email"
           name="email"
           autoComplete="email"
-          placeholder="Email"
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
