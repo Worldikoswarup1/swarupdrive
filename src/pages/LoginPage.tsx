@@ -107,7 +107,7 @@ import { checkSession } from '../utils/sessionUtils';
 
 return (
   <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-    {/* Left promotional panel (fills remaining space) */}
+    {/* Left Side Image */}
     <Box
       sx={{
         flex: 1,
@@ -118,7 +118,6 @@ return (
         backgroundPosition: 'center',
       }}
     >
-      {/* Dark overlay */}
       <Box
         sx={{
           position: 'absolute',
@@ -126,7 +125,6 @@ return (
           bgcolor: 'rgba(0,0,0,0.4)',
         }}
       />
-      {/* Left-aligned title */}
       <Box
         sx={{
           position: 'relative',
@@ -151,38 +149,45 @@ return (
       </Box>
     </Box>
 
-    {/* Right login panel (fixed max width, right‑aligned, slight inset) */}
+    {/* Right Login Section */}
     <Box
       component="section"
       sx={{
         width: '100%',
-        maxWidth: 400,
-        ml: 'auto',    // pushes it to the right
-        mr: 4,         // slight inset from right edge
-        bgcolor: '#ffffff',
+        maxWidth: 420,
+        ml: 'auto',
+        mr: 8, // 👉 right shifted, not stuck
+        bgcolor: '#fff',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
         justifyContent: 'center',
-        py: 6,
         px: 4,
+        py: 8,
       }}
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        noValidate
-        sx={{ width: '100%' }}
-      >
-        
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        {/* Logo */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <Avatar
+            src="/assets/icon.png"
+            sx={{ width: 56, height: 56 }}
+            variant="square"
+          />
+        </Box>
+
         <Typography
           component="h1"
-          variant="h4"
-          sx={{ mb: 1, fontWeight: 600, color: '#333' }}
+          variant="h5"
+          sx={{ fontWeight: 600, mb: 1.5, textAlign: 'center' }}
         >
           Sign In
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          See what’s going on with your business
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 3, textAlign: 'center' }}
+        >
+          Access your personal drive
         </Typography>
 
         {error && (
@@ -192,54 +197,42 @@ return (
         )}
 
         <TextField
-          margin="normal"
-          required
           fullWidth
-          id="email"
+          variant="standard"
           label="Email"
-          name="email"
-          autoComplete="email"
-          autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={!!formErrors.email}
           helperText={formErrors.email}
-          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          sx={{ mb: 3 }}
         />
 
         <TextField
-          margin="normal"
-          required
           fullWidth
-          name="password"
+          variant="standard"
           label="Password"
           type="password"
-          id="password"
-          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={!!formErrors.password}
           helperText={formErrors.password}
-          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          sx={{ mb: 2 }}
         />
 
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mt: 1,
+            justifyContent: 'flex-end',
+            mb: 4,
           }}
         >
-          <FormControlLabel
-            control={<Checkbox size="small" />}
-            label={<Typography variant="body2">Remember me</Typography>}
-          />
           <Link
             component={RouterLink}
             to="#"
-            underline="none"
-            sx={{ fontSize: '0.875rem', fontWeight: 500 }}
+            underline="hover"
+            sx={{ fontSize: '0.85rem' }}
           >
             Forgot password?
           </Link>
@@ -251,31 +244,29 @@ return (
           variant="contained"
           disabled={loading}
           sx={{
-            mt: 4,
-            mb: 2,
             py: 1.5,
-            borderRadius: 1,
-            background: 'linear-gradient(90deg, #667eea, #764ba2)',
             fontWeight: 600,
             fontSize: '1rem',
-            '&:hover': { background: 'linear-gradient(90deg, #5a67d8, #6b46c1)' },
+            backgroundColor: '#1a1a1a',
+            '&:hover': { backgroundColor: '#111' },
+            borderRadius: '8px',
           }}
         >
-          {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Login'}
+          {loading ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : 'Login'}
         </Button>
 
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Typography variant="body2" component="span" color="text.secondary">
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Typography variant="body2" color="text.secondary">
             Not registered yet?{' '}
+            <Link
+              component={RouterLink}
+              to="https://workspace-new.vercel.app/signup"
+              underline="hover"
+              sx={{ fontWeight: 600 }}
+            >
+              Create an account
+            </Link>
           </Typography>
-          <Link
-            component={RouterLink}
-            to="https://workspace-new.vercel.app/signup"
-            underline="none"
-            sx={{ fontWeight: 600 }}
-          >
-            Create an account
-          </Link>
         </Box>
       </Box>
     </Box>
