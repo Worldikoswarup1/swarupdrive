@@ -173,16 +173,7 @@ return (
         noValidate
         sx={{ width: '100%' }}
       >
-        {/* Logo above the Sign In heading */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <img
-            src="/icon.png"
-            alt="SwarupDrive Logo"
-            width={2000}
-            height={2000}
-            style={{ display: 'inline-block' }}
-          />
-        </Box>
+        
         <Typography
           component="h1"
           variant="h4"
