@@ -176,7 +176,7 @@ return (
         {/* Logo above the Sign In heading */}
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           <img
-            src="/assets/icon.png"
+            src="/icon.png"
             alt="SwarupDrive Logo"
             width={48}
             height={48}
