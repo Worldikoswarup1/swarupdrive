@@ -1,10 +1,9 @@
-//swarupdrive/src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
   Paper,
   Container,
   Avatar,
@@ -18,7 +17,6 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingScreen from '../components/LoadingScreen';
 import { checkSession } from '../utils/sessionUtils';
-import { fetchIP, getDeviceId } from '../utils/deviceUtils'; // assumed utils
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -57,9 +55,10 @@ const LoginPage: React.FC = () => {
       setChecking(true);
       clearError();
       try {
-        const ip = await fetchIP();
-        const deviceId = getDeviceId();
+        const ip = await fetch('/api/ip').then((res) => res.text());
+        const deviceId = localStorage.getItem('device_id');
         const session = await checkSession(ip, deviceId);
+
         if (session.valid) {
           return navigate('/dashboard');
         }
@@ -73,17 +72,6 @@ const LoginPage: React.FC = () => {
     verify();
   }, [navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    if (validateForm()) {
-      try {
-        await login(email, password);
-        navigate('/dashboard');
-      } catch {}
-    }
-  };
-
   if (checking) {
     return (
       <LoadingScreen>
@@ -94,113 +82,116 @@ const LoginPage: React.FC = () => {
     );
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+
+    if (validateForm()) {
+      try {
+        await login(email, password);
+        navigate('/dashboard');
+      } catch {
+        // Error handled in context
+      }
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(to right, #0f2027, #203a43, #2c5364)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 6,
-        px: 2,
-      }}
-    >
-      <Container maxWidth="xs">
-        <Paper
-          elevation={6}
-          sx={{
-            backdropFilter: 'blur(15px)',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-            borderRadius: 4,
-            p: 4,
-            color: 'white',
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-              <LockIcon />
-            </Avatar>
-            <Typography component="h1" variant="h5" sx={{ mb: 2, color: 'white' }}>
-              Sign In to SwarupDrive
-            </Typography>
-            {error && (
-              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={!!formErrors.email}
-                helperText={formErrors.email}
-                InputLabelProps={{ style: { color: 'white' } }}
-                InputProps={{
-                  style: { color: 'white' },
-                }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={!!formErrors.password}
-                helperText={formErrors.password}
-                InputLabelProps={{ style: { color: 'white' } }}
-                InputProps={{
-                  style: { color: 'white' },
-                }}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  py: 1.5,
-                  background: 'linear-gradient(90deg, #00c9ff, #92fe9d)',
-                  color: '#000',
-                  fontWeight: 600,
-                }}
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Sign In'}
-              </Button>
-              <Grid container justifyContent="flex-end">
-                <Grid item>
-                  <Link
-                    component={RouterLink}
-                    to="https://workspace-new.vercel.app/signup"
-                    variant="body2"
-                    sx={{ color: '#aadfff' }}
-                  >
-                    {"Don't have an account? Sign Up"}
-                  </Link>
-                </Grid>
+    <Container component="main" maxWidth="xs" sx={{
+      background: 'linear-gradient(to right top, #0f2027, #203a43, #2c5364)',
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 0,
+    }}>
+      <Paper
+        elevation={10}
+        sx={{
+          backdropFilter: 'blur(12px)',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 4,
+          px: 5,
+          py: 6,
+          width: '100%',
+          color: 'white',
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
+            <LockIcon fontSize="large" />
+          </Avatar>
+          <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+            Sign In to SwarupDrive
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={!!formErrors.email}
+              helperText={formErrors.email}
+              variant="filled"
+              sx={{ input: { color: 'white' }, label: { color: 'white' } }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={!!formErrors.password}
+              helperText={formErrors.password}
+              variant="filled"
+              sx={{ input: { color: 'white' }, label: { color: 'white' } }}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{
+                mt: 3,
+                mb: 2,
+                py: 1.5,
+                background: 'linear-gradient(to right, #667eea, #764ba2)',
+                color: 'white',
+                fontWeight: 'bold',
+              }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign In'}
+            </Button>
+            <Grid container justifyContent="flex-end">
+              <Grid item>
+                <Link component={RouterLink} to="https://workspace-new.vercel.app/signup" variant="body2" sx={{ color: '#90caf9' }}>
+                  {"Don't have an account? Sign Up"}
+                </Link>
               </Grid>
-            </Box>
+            </Grid>
           </Box>
-        </Paper>
-      </Container>
-    </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
