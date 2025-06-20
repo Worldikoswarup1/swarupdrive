@@ -170,7 +170,7 @@ return (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
           <Avatar
             src="/assets/icon.png"
-            sx={{ width: 56, height: 56 }}
+            sx={{ width: 64, height: 64, bgcolor: 'transparent' }}
             variant="square"
           />
         </Box>
