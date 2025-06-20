@@ -151,6 +151,7 @@ import { checkSession } from '../utils/sessionUtils';
         width: '100%',
         maxWidth: 360,
         ml: 'auto',
+        mr: 4,
         bgcolor: '#ffffff',
         display: 'flex',
         alignItems: 'center',
