@@ -1,3 +1,4 @@
+
 //swarupdrive/src/pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { 
@@ -170,7 +171,7 @@ return (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
           <Avatar
             src="/assets/icon.png"
-            sx={{ width: 64, height: 64, bgcolor: 'transparent' }}
+            sx={{ width: 56, height: 56 }}
             variant="square"
           />
         </Box>
