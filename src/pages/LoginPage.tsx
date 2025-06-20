@@ -104,8 +104,8 @@ import { checkSession } from '../utils/sessionUtils';
   };
 
 return (
-  <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f2f5' }}>
-    {/* Left promotional panel */}
+  <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    {/* Left promotional panel (fills remaining space) */}
     <Box
       sx={{
         flex: 1,
@@ -124,7 +124,7 @@ return (
           bgcolor: 'rgba(0,0,0,0.4)',
         }}
       />
-      {/* Left‑aligned title */}
+      {/* Left-aligned title */}
       <Box
         sx={{
           position: 'relative',
@@ -132,50 +132,53 @@ return (
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          pl: 6,
+          pl: 8,
         }}
       >
         <Typography
           variant="h2"
-          sx={{ color: 'white', fontWeight: 700, textAlign: 'left', lineHeight: 1.2 }}
+          sx={{
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: { xs: '2rem', md: '3rem' },
+            lineHeight: 1.1,
+          }}
         >
           Swarup Drive
         </Typography>
       </Box>
     </Box>
 
-    {/* Right login panel */}
+    {/* Right login panel (fixed max width, right‑aligned, slight inset) */}
     <Box
       component="section"
       sx={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'flex-end',
+        width: '100%',
+        maxWidth: 400,
+        ml: 'auto',    // pushes it to the right
+        mr: 4,         // slight inset from right edge
         bgcolor: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 6,
+        px: 4,
       }}
     >
-      <Paper
+      <Box
         component="form"
         onSubmit={handleSubmit}
         noValidate
-        elevation={0}
-        sx={{
-          width: '100%',
-          maxWidth: 360,
-          px: 4,
-          py: 6,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        sx={{ width: '100%' }}
       >
-        <Avatar sx={{ m: '0 auto 16px', bgcolor: 'primary.main', width: 56, height: 56 }}>
-          <LockIcon fontSize="large" />
-        </Avatar>
-
-        <Typography component="h1" variant="h5" sx={{ textAlign: 'center', mb: 1, fontWeight: 600 }}>
-          Sign In to SwarupDrive
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ mb: 1, fontWeight: 600, color: '#333' }}
+        >
+          Sign In
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           See what’s going on with your business
         </Typography>
 
@@ -198,7 +201,7 @@ return (
           onChange={(e) => setEmail(e.target.value)}
           error={!!formErrors.email}
           helperText={formErrors.email}
-          variant="standard"
+          variant="outlined"
         />
 
         <TextField
@@ -214,7 +217,7 @@ return (
           onChange={(e) => setPassword(e.target.value)}
           error={!!formErrors.password}
           helperText={formErrors.password}
-          variant="standard"
+          variant="outlined"
         />
 
         <Box
@@ -225,12 +228,17 @@ return (
             mt: 1,
           }}
         >
-          <Box component="label" sx={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem' }}>
-            <input type="checkbox" style={{ marginRight: 4 }} />
-            Remember Me
-          </Box>
-          <Link component={RouterLink} to="#" variant="body2">
-            Forgot Password?
+          <FormControlLabel
+            control={<Checkbox size="small" />}
+            label={<Typography variant="body2">Remember me</Typography>}
+          />
+          <Link
+            component={RouterLink}
+            to="#"
+            underline="none"
+            sx={{ fontSize: '0.875rem', fontWeight: 500 }}
+          >
+            Forgot password?
           </Link>
         </Box>
 
@@ -242,28 +250,31 @@ return (
           sx={{
             mt: 4,
             mb: 2,
-            py: 1.25,
+            py: 1.5,
             borderRadius: 1,
-            backgroundColor: '#7b2cbf',
-            '&:hover': { backgroundColor: '#9d4edd' },
+            background: 'linear-gradient(90deg, #667eea, #764ba2)',
+            fontWeight: 600,
+            fontSize: '1rem',
+            '&:hover': { background: 'linear-gradient(90deg, #5a67d8, #6b46c1)' },
           }}
         >
           {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Login'}
         </Button>
 
-        <Grid container justifyContent="center">
-          <Grid item>
-            <Link
-              component={RouterLink}
-              to="https://workspace-new.vercel.app/signup"
-              variant="body2"
-              sx={{ mt: 1 }}
-            >
-              Not Registered Yet? Create an account
-            </Link>
-          </Grid>
-        </Grid>
-      </Paper>
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Typography variant="body2" component="span" color="text.secondary">
+            Not registered yet?{' '}
+          </Typography>
+          <Link
+            component={RouterLink}
+            to="https://workspace-new.vercel.app/signup"
+            underline="none"
+            sx={{ fontWeight: 600 }}
+          >
+            Create an account
+          </Link>
+        </Box>
+      </Box>
     </Box>
   </Box>
 );
