@@ -178,9 +178,12 @@ return (
           <img
             src="/icon.png"
             alt="SwarupDrive Logo"
-            width={100}
-            height={100}
-            style={{ display: 'inline-block' }}
+            width={2000}
+            height={2000}
+            style={{
+              marginBottom: '8px',
+              objectFit: 'contain',
+            }}
           />
         </Box>
         <Typography
