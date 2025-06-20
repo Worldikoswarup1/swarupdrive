@@ -103,16 +103,18 @@ import { checkSession } from '../utils/sessionUtils';
     }
   };
 
- return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+   return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0f2f5' }}>
       {/* Left promotional panel */}
       <Box
         sx={{
           flex: 1,
           position: 'relative',
-          backgroundImage: 'url(https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260)',
+          backgroundImage:
+            'url(https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          display: { xs: 'none', md: 'block' }, // hide on mobile
         }}
       >
         {/* Dark overlay */}
@@ -123,7 +125,7 @@ import { checkSession } from '../utils/sessionUtils';
             bgcolor: 'rgba(0,0,0,0.4)',
           }}
         />
-        {/* Title */}
+        {/* Title shifted left */}
         <Box
           sx={{
             position: 'relative',
@@ -131,9 +133,9 @@ import { checkSession } from '../utils/sessionUtils';
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            px: 4,
+            pl: 6,
           }}
         >
           <Typography
@@ -141,7 +143,7 @@ import { checkSession } from '../utils/sessionUtils';
             sx={{
               color: 'white',
               fontWeight: 700,
-              textAlign: 'center',
+              textAlign: 'left',
               lineHeight: 1.2,
             }}
           >
@@ -151,39 +153,46 @@ import { checkSession } from '../utils/sessionUtils';
       </Box>
 
       {/* Right login panel */}
-      <Container component="main" maxWidth="xs" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Box
+      <Container
+        component="main"
+        maxWidth="xs"
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+          py: 4,
+        }}
+      >
+        <Paper
+          elevation={12}
           sx={{
             width: '100%',
-            py: 4,
-            px: 3,
+            p: { xs: 3, sm: 5 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 4,
+            backdropFilter: 'blur(16px)',
+            background: 'rgba(255,255,255,0.75)',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
+            border: '1px solid rgba(255,255,255,0.4)',
           }}
         >
-          <Paper
-            elevation={6}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              borderRadius: 2,
-              backdropFilter: 'blur(8px)',
-              background: 'rgba(255,255,255,0.85)',
-            }}
-          >
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-            <LockIcon />
+          <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
+            <LockIcon fontSize="large" />
           </Avatar>
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+          <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Sign In to SwarupDrive
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
               {error}
             </Alert>
           )}
-          
+
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -198,7 +207,18 @@ import { checkSession } from '../utils/sessionUtils';
               onChange={(e) => setEmail(e.target.value)}
               error={!!formErrors.email}
               helperText={formErrors.email}
+              variant="outlined"
+              sx={{
+                background: 'rgba(255,255,255,0.9)',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': { borderColor: '#ccc' },
+                  '&:hover fieldset': { borderColor: '#888' },
+                  '&.Mui-focused fieldset': { borderColor: '#4e54c8' },
+                },
+              }}
             />
+
             <TextField
               margin="normal"
               required
@@ -212,29 +232,53 @@ import { checkSession } from '../utils/sessionUtils';
               onChange={(e) => setPassword(e.target.value)}
               error={!!formErrors.password}
               helperText={formErrors.password}
+              variant="outlined"
+              sx={{
+                background: 'rgba(255,255,255,0.9)',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': { borderColor: '#ccc' },
+                  '&:hover fieldset': { borderColor: '#888' },
+                  '&.Mui-focused fieldset': { borderColor: '#4e54c8' },
+                },
+              }}
             />
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
               disabled={loading}
+              sx={{
+                mt: 3,
+                mb: 2,
+                py: 1.75,
+                borderRadius: 3,
+                background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+                fontSize: '1rem',
+                fontWeight: 700,
+              }}
             >
-              {loading ? <CircularProgress size={24} /> : "Sign In"}
+              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Sign In'}
             </Button>
-            <Grid container justifyContent="flex-end">
+
+            <Grid container justifyContent="flex-end" sx={{ mt: 1 }}>
               <Grid item>
-                <Link component={RouterLink} to="https://workspace-new.vercel.app/signup" variant="body2">
+                <Link
+                  component={RouterLink}
+                  to="https://workspace-new.vercel.app/signup"
+                  variant="body2"
+                  sx={{ color: 'rgba(0,0,0,0.6)', '&:hover': { color: 'rgba(0,0,0,0.9)' } }}
+                >
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
             </Grid>
           </Box>
         </Paper>
-      </Box>
-    </Container>
-  </Box>
+      </Container>
+    </Box>
   );
 };
-
 export default LoginPage;
