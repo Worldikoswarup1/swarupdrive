@@ -103,29 +103,74 @@ import { checkSession } from '../utils/sessionUtils';
     }
   };
 
-  return (
-    <Container component="main" maxWidth="xs">
+ return (
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Left promotional panel */}
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          minHeight: '100vh',
-          justifyContent: 'center',
-          py: 8,
+          flex: 1,
+          position: 'relative',
+          backgroundImage: 'url(https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
       >
-        <Paper
-          elevation={3}
+        {/* Dark overlay */}
+        <Box
           sx={{
-            p: 4,
-            width: '100%',
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'rgba(0,0,0,0.4)',
+          }}
+        />
+        {/* Title */}
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 2,
+            justifyContent: 'center',
+            px: 4,
           }}
         >
+          <Typography
+            variant="h2"
+            sx={{
+              color: 'white',
+              fontWeight: 700,
+              textAlign: 'center',
+              lineHeight: 1.2,
+            }}
+          >
+            Swarup Drive
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Right login panel */}
+      <Container component="main" maxWidth="xs" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box
+          sx={{
+            width: '100%',
+            py: 4,
+            px: 3,
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              borderRadius: 2,
+              backdropFilter: 'blur(8px)',
+              background: 'rgba(255,255,255,0.85)',
+            }}
+          >
           <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
             <LockIcon />
           </Avatar>
@@ -188,6 +233,7 @@ import { checkSession } from '../utils/sessionUtils';
         </Paper>
       </Box>
     </Container>
+  </Box>
   );
 };
 
