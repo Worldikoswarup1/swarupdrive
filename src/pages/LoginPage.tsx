@@ -16,7 +16,7 @@ import {
   Checkbox,
   FormControlLabel
 } from '@mui/material';
-import { LockOutlined as LockIcon } from '@mui/icons-material';
+import { LockOutlined as LockIcon , Face as FaceIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect } from 'react';
@@ -255,7 +255,28 @@ return (
         >
           {loading ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : 'Login'}
         </Button>
-
+        {/* OR separator + Face Login */}
+        <Box sx={{ textAlign: 'center', mt: 2, mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            or
+          </Typography>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<FaceIcon />}
+            sx={{
+              py: 1.5,
+              fontWeight: 600,
+              fontSize: '1rem',
+              borderRadius: '8px',
+            }}
+            onClick={() => {
+              /* TODO: trigger Face ID flow */
+            }}
+          >
+            Login with Face
+          </Button>
+        </Box>
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography variant="body2" color="text.secondary">
             Not registered yet?{' '}
