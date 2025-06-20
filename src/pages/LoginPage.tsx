@@ -148,7 +148,9 @@ import { checkSession } from '../utils/sessionUtils';
     <Box
       component="section"
       sx={{
-        flex: 1,
+        width: '100%',
+        maxWidth: 360,
+        ml: 'auto',
         bgcolor: '#ffffff',
         display: 'flex',
         alignItems: 'center',
