@@ -180,10 +180,7 @@ return (
             alt="SwarupDrive Logo"
             width={2000}
             height={2000}
-            style={{
-              marginBottom: '8px',
-              objectFit: 'contain',
-            }}
+            style={{ display: 'inline-block' }}
           />
         </Box>
         <Typography
