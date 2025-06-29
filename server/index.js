@@ -315,10 +315,10 @@ const initDatabase = async () => {
       );
     `);
 
-    // Create podcast_sessions table
+    // Create podcast_sessions table - FIXED: Use gen_random_uuid() instead of uuid_generate_v4()
     await pool.query(`
       CREATE TABLE IF NOT EXISTS podcast_sessions (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name TEXT NOT NULL,
         host_id UUID NOT NULL,
         meeting_key TEXT NOT NULL UNIQUE,
@@ -337,27 +337,16 @@ const initDatabase = async () => {
     `);
 
     
-    // podcast recordings table
+    // podcast recordings table - FIXED: Use gen_random_uuid() instead of uuid_generate_v4()
     await pool.query(`
       CREATE TABLE IF NOT EXISTS recordings (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         session_id UUID NOT NULL REFERENCES podcast_sessions(id) ON DELETE CASCADE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         video_number INTEGER NOT NULL,
         start_time TIMESTAMPTZ NOT NULL,
         end_time TIMESTAMPTZ,
         video_url TEXT
-      );
-    `);
-
-    // New: short‐lived play links table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS play_links (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
-        token TEXT UNIQUE NOT NULL,
-        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -375,6 +364,19 @@ const initDatabase = async () => {
       );
     `);
 
+    // Sessions table for JWT session tracking
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        ip_address TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        jwt_id TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        revoked BOOLEAN DEFAULT FALSE
+      );
+    `);
 
     
     console.log('Database tables initialized successfully');
@@ -642,7 +644,7 @@ app.post(
         }
       }
 
-      // If it’s a video file, we’ll handle ffmpeg metadata *after* uploading and DB insert,
+      // If it's a video file, we'll handle ffmpeg metadata *after* uploading and DB insert,
       // because ffprobe might take a moment (and can run async). We'll capture metadata in a callback.
       const isVideo = mimetype.startsWith('video/');
 
@@ -693,7 +695,7 @@ app.post(
         );
       }
 
-      // 10) If it’s a video file, run ffprobe now that we have newFileId and disk path:
+      // 10) If it's a video file, run ffprobe now that we have newFileId and disk path:
       if (isVideo) {
         ffmpeg.ffprobe(filePath, async (err, metadata) => {
           if (err) {
@@ -815,7 +817,7 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     // 2) Download into a buffer
     // AFTER: add cacheControl and revalidate flags
   // Append a dummy query param based on a timestamp to force revalidation
-    // Force‐bypass CDN cache by adding a “noCache” query param with current timestamp
+    // Force‐bypass CDN cache by adding a "noCache" query param with current timestamp
     const cacheKey = Date.now().toString();
     const pathWithNoCache = `${file.storage_path}?noCache=${cacheKey}`;
     const { data: stream, error: downloadError, status } =
@@ -836,7 +838,7 @@ app.get('/api/files/:id/content', authenticateToken, async (req, res) => {
     console.log('→ [Content] file.id =', file.id);
     console.log('→ [Content] iv         =', file.iv);
     console.log('→ [Content] auth_tag   =', file.auth_tag);
-    console.log('→ [Content] “encrypted” flag =', file.encrypted);
+    console.log('→ [Content] "encrypted" flag =', file.encrypted);
     console.log('→ [Content] ciphertext length (chars) =', base64Ciphertext.length);
     console.log('→ [Content] ciphertext sample (first 30 chars) =', base64Ciphertext.slice(0, 30));
     
@@ -1214,35 +1216,64 @@ app.post('/api/music/metadata', authenticateToken, async (req, res) => {
 
 
 
-// ─── New: POST /api/play-link ───
+// ─── FIXED: POST /api/play-link with comprehensive error handling ───
 app.post('/api/play-link', async (req, res) => {
+  console.log('🎵 [/api/play-link] Request received');
+  console.log('🎵 [/api/play-link] Request body:', req.body);
+  
   try {
     const { fileId } = req.body;
+    
+    // Validate input
     if (!fileId) {
+      console.error('❌ [/api/play-link] Missing fileId in request body');
       return res.status(400).json({ message: 'fileId is required' });
     }
 
-    // 1) Generate a new random token (hex, 32 bytes → 64‐char string)
+    console.log('🎵 [/api/play-link] Processing fileId:', fileId);
+
+    // 1) Check if file exists
+    const fileCheck = await pool.query('SELECT id, name FROM files WHERE id = $1', [fileId]);
+    if (fileCheck.rows.length === 0) {
+      console.error('❌ [/api/play-link] File not found:', fileId);
+      return res.status(404).json({ message: 'File not found' });
+    }
+    
+    console.log('✅ [/api/play-link] File found:', fileCheck.rows[0].name);
+
+    // 2) Generate a new random token (hex, 64 bytes → 128‐char string)
     const token = crypto.randomBytes(64).toString('hex');
+    console.log('🎵 [/api/play-link] Generated token:', token.substring(0, 16) + '...');
 
-    // 2) Compute expires_at = now + 10 seconds
-    const expiresAt = new Date(Date.now() + 60 * 1000); // 10s in the future
+    // 3) Compute expires_at = now + 60 seconds
+    const expiresAt = new Date(Date.now() + 60 * 1000); // 60s in the future
+    console.log('🎵 [/api/play-link] Token expires at:', expiresAt.toISOString());
 
-    // 3) Insert into play_links
+    // 4) Insert into play_links table
+    console.log('🎵 [/api/play-link] Inserting into play_links table...');
     await pool.query(
       `INSERT INTO play_links (file_id, token, expires_at)
        VALUES ($1, $2, $3)`,
       [fileId, token, expiresAt]
     );
+    console.log('✅ [/api/play-link] Successfully inserted play link');
 
-    // 4) Build the short‐lived URL that SwarupMusic will consume
-    //    (replace <SWARUPMUSIC_DOMAIN> with your actual domain)
+    // 5) Build the short‐lived URL that SwarupMusic will consume
     const playUrl = `https://swarupmusic.vercel.app/?playToken=${token}`;
+    console.log('🎵 [/api/play-link] Generated play URL:', playUrl);
 
     return res.status(200).json({ playUrl });
   } catch (err) {
-    console.error('❌ /api/play-link error:', err);
-    return res.status(500).json({ message: 'Server error generating play link' });
+    console.error('❌ [/api/play-link] Detailed error:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      detail: err.detail
+    });
+    return res.status(500).json({ 
+      message: 'Server error generating play link',
+      error: err.message 
+    });
   }
 });
 
