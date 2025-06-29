@@ -304,6 +304,17 @@ const initDatabase = async () => {
       );
     `);
 
+    // CRITICAL: Create play_links table for short-lived play links
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS play_links (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        file_id UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Create podcast_sessions table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS podcast_sessions (
